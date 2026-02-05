@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./zavod.db:/app/zavod.db
+      - ./data:/app/data
       - ./uploads:/app/uploads
     networks:
       - glpi-ssl_glpi-network
@@ -14,6 +14,7 @@ services:
       - HOST=0.0.0.0
       - PORT=8000
       - DEBUG=false
+      - DATABASE_URL=sqlite:////app/data/zavod.db
     restart: unless-stopped
 
 networks:

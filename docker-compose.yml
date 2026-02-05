@@ -8,8 +8,14 @@ services:
     volumes:
       - ./zavod.db:/app/zavod.db
       - ./uploads:/app/uploads
+    networks:
+      - glpi-ssl_glpi-network
     environment:
       - HOST=0.0.0.0
       - PORT=8000
       - DEBUG=false
     restart: unless-stopped
+
+networks:
+  glpi-ssl_glpi-network:
+    external: true

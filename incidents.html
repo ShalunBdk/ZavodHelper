@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инциденты и Инструкции</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2rem;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Главные кнопки */
+        .main-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .main-btn {
+            padding: 25px 60px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 250px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .main-btn.incidents {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
+        }
+
+        .main-btn.incidents:hover, .main-btn.incidents.active {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(231, 76, 60, 0.6);
+        }
+
+        .main-btn.instructions {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        .main-btn.instructions:hover, .main-btn.instructions.active {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(52, 152, 219, 0.6);
+        }
+
+        /* Панель списка */
+        .list-panel {
+            display: none;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            animation: slideDown 0.3s ease;
+        }
+
+        .list-panel.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Поиск */
+        .search-box {
+            width: 100%;
+            padding: 18px 25px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .search-box::placeholder {
+            color: #888;
+        }
+
+        .search-box:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5);
+        }
+
+        /* Список элементов */
+        .items-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .item-btn {
+            padding: 20px 25px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: 2px solid transparent;
+        }
+
+        .item-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.02);
+        }
+
+        .item-btn.incident-item {
+            border-left: 5px solid #e74c3c;
+        }
+
+        .item-btn.instruction-item {
+            border-left: 5px solid #3498db;
+        }
+
+        .item-pages-count {
+            display: block;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.6);
+            margin-top: 5px;
+        }
+
+        /* Модальное окно */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: 20px;
+            max-width: 1000px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalAppear 0.3s ease;
+        }
+
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+            color: white;
+            padding: 20px 25px;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .back-btn::before {
+            content: "←";
+            font-size: 1.3rem;
+        }
+
+        /* Навигация по страницам */
+        .page-navigation {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .nav-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.3s;
+            min-width: 120px;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .nav-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .page-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #ddd;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .page-dot.active {
+            background: #e67e22;
+            transform: scale(1.3);
+        }
+
+        .page-dot:hover:not(.active) {
+            background: #bbb;
+        }
+
+        .page-number {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .modal-body {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            padding: 25px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .modal-image {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .modal-image img {
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .time-badge {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .page-title {
+            font-size: 1.3rem;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e67e22;
+        }
+
+        .actions-box {
+            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+        }
+
+        .actions-box h3 {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            color: #ecf0f1;
+        }
+
+        .actions-list {
+            list-style: none;
+        }
+
+        .actions-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 1.1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .actions-list li:last-child {
+            border-bottom: none;
+        }
+
+        .action-number {
+            background: #3498db;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .main-btn {
+                width: 100%;
+                padding: 20px 40px;
+            }
+
+            .modal-body {
+                flex-direction: column;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .nav-btn {
+                padding: 12px 20px;
+                font-size: 1rem;
+                min-width: 100px;
+            }
+
+            .page-navigation {
+                flex-wrap: wrap;
+            }
+        }
+
+        /* Нет результатов */
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255,255,255,0.6);
+            font-size: 1.2rem;
+            grid-column: 1 / -1;
+        }
+
+        /* Свайп подсказка */
+        .swipe-hint {
+            text-align: center;
+            color: #888;
+            font-size: 0.9rem;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 0 0 20px 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏭 База знаний производства</h1>
+
+        <div class="main-buttons">
+            <button class="main-btn incidents" onclick="togglePanel('incidents')">
+                🚨 Инциденты
+            </button>
+            <button class="main-btn instructions" onclick="togglePanel('instructions')">
+                📋 Инструкции
+            </button>
+        </div>
+
+        <!-- Панель инцидентов -->
+        <div id="incidents-panel" class="list-panel">
+            <input type="text" class="search-box" placeholder="🔍 Поиск инцидента..." oninput="filterItems('incidents')">
+            <div class="items-list" id="incidents-list"></div>
+        </div>
+
+        <!-- Панель инструкций -->
+        <div id="instructions-panel" class="list-panel">
+            <input type="text" class="search-box" placeholder="🔍 Поиск инструкции..." oninput="filterItems('instructions')">
+            <div class="items-list" id="instructions-list"></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно -->
+    <div class="modal-overlay" id="modal" onclick="closeModalOutside(event)">
+        <div class="modal" id="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Заголовок</h2>
+                <div class="header-controls">
+                    <button class="back-btn" onclick="closeModal()">Назад</button>
+                </div>
+            </div>
+            
+            <!-- Навигация по страницам -->
+            <div class="page-navigation" id="page-nav">
+                <button class="nav-btn" id="prev-btn" onclick="changePage(-1)">← Назад</button>
+                <div class="page-indicator" id="page-dots"></div>
+                <span class="page-number" id="page-number">1 / 3</span>
+                <button class="nav-btn" id="next-btn" onclick="changePage(1)">Далее →</button>
+            </div>
+
+            <div class="modal-body" id="modal-body">
+                <div class="modal-content">
+                    <h3 class="page-title" id="page-title">Название страницы</h3>
+                    <div class="time-badge" id="modal-time">Регламент: 30 минут</div>
+                    <div class="actions-box">
+                        <h3>Действия:</h3>
+                        <ol class="actions-list" id="modal-actions"></ol>
+                    </div>
+                </div>
+                <div class="modal-image">
+                    <img id="modal-img" src="" alt="Изображение">
+                </div>
+            </div>
+            
+            <div class="swipe-hint">👆 Используйте кнопки или свайп для переключения страниц</div>
+        </div>
+    </div>
+
+    <script>
+        // Данные инцидентов с несколькими страницами
+        const incidentsData = [
+            {
+                id: 1,
+                title: "Потекла рубашка",
+                pages: [
+                    {
+                        title: "Диагностика проблемы",
+                        time: "5 минут",
+                        image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=600",
+                        actions: [
+                            "Остановить линию розлива",
+                            "Определить место утечки визуально",
+                            "Проверить давление в системе",
+                            "Оценить объём утечки"
+                        ]
+                    },
+                    {
+                        title: "Устранение утечки",
+                        time: "15 минут",
+                        image: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600",
+                        actions: [
+                            "Перекрыть подачу воды",
+                            "Слить остатки из рубашки",
+                            "Проверить уплотнители",
+                            "Заменить повреждённые прокладки",
+                            "Закрутить крепёжные болты"
+                        ]
+                    },
+                    {
+                        title: "Проверка и запуск",
+                        time: "10 минут",
+                        image: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=600",
+                        actions: [
+                            "Открыть подачу воды",
+                            "Проверить герметичность под давлением",
+                            "Запустить тестовый цикл",
+                            "Убедиться в отсутствии утечек",
+                            "Возобновить производство"
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 2,
+                title: "Застряла этикетка",
+                pages: [
+                    {
+                        title: "Остановка и доступ",
+                        time: "3 минуты",
+                        image: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=600",
+                        actions: [
+                            "Нажать кнопку остановки этикетировщика",
+                            "Дождаться полной остановки",
+                            "Открыть защитный кожух",
+                            "Надеть защитные перчатки"
+                        ]
+                    },
+                    {
+                        title: "Устранение замятия",
+                        time: "7 минут",
+                        image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600",
+                        actions: [
+                            "Аккуратно удалить застрявшую этикетку",
+                            "Проверить ролики на наличие остатков клея",
+                            "Очистить направляющие",
+                            "Проверить натяжение ленты"
+                        ]
+                    },
+                    {
+                        title: "Запуск оборудования",
+                        time: "5 минут",
+                        image: "https://images.unsplash.com/photo-1565793298595-6a879b1d9492?w=600",
+                        actions: [
+                            "Закрыть защитный кожух",
+                            "Выполнить пробную этикетировку",
+                            "Проверить качество наклейки",
+                            "Запустить в рабочем режиме"
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 3,
+                title: "Сбой конвейера",
+                pages: [
+                    {
+                        title: "Аварийная остановка",
+                        time: "2 минуты",
+                        image: "https://images.unsplash.com/photo-1565793298595-6a879b1d9492?w=600",
+                        actions: [
+                            "Нажать аварийную кнопку СТОП",
+                            "Убедиться в безопасности персонала",
+                            "Отключить питание конвейера",
+                            "Включить аварийное освещение"
+                        ]
+                    },
+                    {
+                        title: "Диагностика неисправности",
+                        time: "15 минут",
+                        image: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600",
+                        actions: [
+                            "Проверить датчики движения",
+                            "Осмотреть приводной ремень",
+                            "Проверить натяжение цепи",
+                            "Проверить состояние подшипников",
+                            "Проверить электрические соединения"
+                        ]
+                    },
+                    {
+                        title: "Ремонт и обслуживание",
+                        time: "20 минут",
+                        image: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600",
+                        actions: [
+                            "Заменить неисправные компоненты",
+                            "Смазать подшипники",
+                            "Отрегулировать натяжение",
+                            "Очистить датчики"
+                        ]
+                    },
+                    {
+                        title: "Тестирование и запуск",
+                        time: "8 минут",
+                        image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=600",
+                        actions: [
+                            "Включить питание",
+                            "Выполнить тестовый запуск на малой скорости",
+                            "Проверить работу всех датчиков",
+                            "Запустить на рабочей скорости",
+                            "Записать в журнал инцидентов"
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 4,
+                title: "Утечка в системе охлаждения",
+                pages: [
+                    {
+                        title: "Локализация проблемы",
+                        time: "10 минут",
+                        image: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600",
+                        actions: [
+                            "Отключить систему охлаждения",
+                            "Визуально найти место утечки",
+                            "Оценить масштаб повреждения",
+                            "Подготовить ёмкости для слива"
+                        ]
+                    },
+                    {
+                        title: "Устранение утечки",
+                        time: "35 минут",
+                        image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=600",
+                        actions: [
+                            "Слить хладагент в ёмкость",
+                            "Демонтировать повреждённый участок",
+                            "Установить новый элемент",
+                            "Проверить все соединения"
+                        ]
+                    },
+                    {
+                        title: "Заправка и проверка",
+                        time: "15 минут",
+                        image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600",
+                        actions: [
+                            "Заправить систему хладагентом",
+                            "Проверить давление в системе",
+                            "Выполнить тестовый запуск",
+                            "Проверить температурные показатели",
+                            "Записать в журнал ТО"
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 5,
+                title: "Ошибка дозатора",
+                pages: [
+                    {
+                        title: "Остановка и проверка",
+                        time: "5 минут",
+                        image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600",
+                        actions: [
+                            "Остановить линию розлива",
+                            "Проверить код ошибки на дисплее",
+                            "Оценить отклонение объёма",
+                            "Проверить уровень продукта в ёмкости"
+                        ]
+                    },
+                    {
+                        title: "Калибровка и очистка",
+                        time: "10 минут",
+                        image: "https://images.unsplash.com/photo-1606206886670-2eca13fd0d62?w=600",
+                        actions: [
+                            "Войти в меню калибровки",
+                            "Очистить форсунки дозатора",
+                            "Проверить датчик уровня",
+                            "Выполнить автокалибровку"
+                        ]
+                    },
+                    {
+                        title: "Контрольный розлив",
+                        time: "5 минут",
+                        image: "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=600",
+                        actions: [
+                            "Выполнить 5 тестовых розливов",
+                            "Измерить фактический объём каждого",
+                            "Скорректировать настройки при необходимости",
+                            "Возобновить производство"
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        // Данные инструкций с несколькими страницами
+        const instructionsData = [
+            {
+                id: 1,
+                title: "Запуск линии розлива",
+                pages: [
+                    {
+                        title: "Подготовка к запуску",
+                        time: "3 минуты",
+                        image: "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=600",
+                        actions: [
+                            "Проверить наличие тары на складе",
+                            "Убедиться в чистоте линии",
+                            "Проверить уровень продукта в резервуаре",
+                            "Включить общее питание линии"
+                        ]
+                    },
+                    {
+                        title: "Запуск оборудования",
+                        time: "5 минут",
+                        image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=600",
+                        actions: [
+                            "Включить подачу воды",
+                            "Активировать конвейер на малой скорости",
+                            "Запустить дозаторы",
+                            "Включить этикетировщик"
+                        ]
+                    },
+                    {
+                        title: "Контроль качества",
+                        time: "2 минуты",
+                        image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600",
+                        actions: [
+                            "Проверить первые 3 образца",
+                            "Измерить объём розлива",
+                            "Проверить качество этикетки",
+                            "Начать серийное производство"
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 2,
+                title: "Замена этикеточной ленты",
+                pages: [
+                    {
+                        title: "Подготовка к замене",
+                        time: "1 минута",
+                        image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600",
+                        actions: [
+                            "Дождаться окончания текущей бобины",
+                            "Остановить этикетировщик",
+                            "Подготовить новую бобину",
+                            "Надеть перчатки"
+                        ]
+                    },
+                    {
+                        title: "Замена бобины",
+                        time: "3 минуты",
+                        image: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=600",
+                        actions: [
+                            "Снять пустую бобину",
+                            "Установить новую ленту на держатель",
+                            "Протянуть ленту через направляющие",
+                            "Закрепить конец ленты"
+                        ]
+                    },
+                    {
+                        title: "Настройка и запуск",
+                        time: "1 минута",
+                        image: "https://images.unsplash.com/photo-1565793298595-6a879b1d9492?w=600",
+                        actions: [
+                            "Отрегулировать натяжение ленты",
+                            "Проверить выравнивание",
+                            "Запустить тестовую этикетировку",
+                            "Возобновить работу"
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 3,
+                title: "Ежедневное ТО конвейера",
+                pages: [
+                    {
+                        title: "Визуальный осмотр",
+                        time: "5 минут",
+                        image: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600",
+                        actions: [
+                            "Осмотреть ленту на предмет повреждений",
+                            "Проверить состояние роликов",
+                            "Осмотреть натяжные механизмы",
+                            "Проверить защитные кожухи"
+                        ]
+                    },
+                    {
+                        title: "Очистка и смазка",
+                        time: "15 минут",
+                        image: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600",
+                        actions: [
+                            "Очистить ленту от загрязнений",
+                            "Протереть датчики",
+                            "Смазать подшипники",
+                            "Очистить фотоэлементы"
+                        ]
+                    },
+                    {
+                        title: "Проверка и документация",
+                        time: "10 минут",
+                        image: "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=600",
+                        actions: [
+                            "Проверить натяжение ленты",
+                            "Протестировать работу датчиков",
+                            "Выполнить пробный запуск",
+                            "Записать результаты в журнал ТО"
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 4,
+                title: "Настройка объёма розлива",
+                pages: [
+                    {
+                        title: "Доступ к настройкам",
+                        time: "2 минуты",
+                        image: "https://images.unsplash.com/photo-1606206886670-2eca13fd0d62?w=600",
+                        actions: [
+                            "Войти в меню настроек (код 1234)",
+                            "Выбрать раздел 'Параметры розлива'",
+                            "Выбрать тип продукции",
+                            "Записать текущие настройки"
+                        ]
+                    },
+                    {
+                        title: "Изменение параметров",
+                        time: "5 минут",
+                        image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600",
+                        actions: [
+                            "Установить требуемый объём",
+                            "Настроить допуск отклонения",
+                            "Сохранить настройки",
+                            "Выйти из меню настроек"
+                        ]
+                    },
+                    {
+                        title: "Проверка настроек",
+                        time: "8 минут",
+                        image: "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=600",
+                        actions: [
+                            "Выполнить 5 пробных розливов",
+                            "Измерить каждый образец",
+                            "Рассчитать среднее отклонение",
+                            "Скорректировать при необходимости",
+                            "Задокументировать изменения"
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 5,
+                title: "Санитарная обработка линии",
+                pages: [
+                    {
+                        title: "Подготовка к обработке",
+                        time: "5 минут",
+                        image: "https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=600",
+                        actions: [
+                            "Остановить производство",
+                            "Слить остатки продукции",
+                            "Подготовить дезраствор по инструкции",
+                            "Надеть защитную одежду и перчатки"
+                        ]
+                    },
+                    {
+                        title: "Промывка системы",
+                        time: "20 минут",
+                        image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=600",
+                        actions: [
+                            "Промыть систему чистой водой (5 мин)",
+                            "Залить дезраствор в систему",
+                            "Включить циркуляцию на 15 минут",
+                            "Слить дезраствор"
+                        ]
+                    },
+                    {
+                        title: "Финальная промывка",
+                        time: "15 минут",
+                        image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600",
+                        actions: [
+                            "Промыть чистой водой (10 мин)",
+                            "Взять пробу воды на анализ",
+                            "Проверить pH (норма 6.5-7.5)",
+                            "При необходимости повторить промывку"
+                        ]
+                    },
+                    {
+                        title: "Документирование",
+                        time: "5 минут",
+                        image: "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=600",
+                        actions: [
+                            "Записать время обработки",
+                            "Указать использованный раствор",
+                            "Записать результаты pH-теста",
+                            "Подписать журнал санобработки"
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 6,
+                title: "Калибровка весов",
+                pages: [
+                    {
+                        title: "Подготовка к калибровке",
+                        time: "3 минуты",
+                        image: "https://images.unsplash.com/photo-1606206886670-2eca13fd0d62?w=600",
+                        actions: [
+                            "Очистить платформу весов",
+                            "Проверить уровень (пузырёк в центре)",
+                            "Подготовить эталонные гири",
+                            "Дать весам прогреться 10 минут"
+                        ]
+                    },
+                    {
+                        title: "Процесс калибровки",
+                        time: "12 минут",
+                        image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600",
+                        actions: [
+                            "Войти в режим калибровки (Menu → Cal)",
+                            "Обнулить показания без груза",
+                            "Установить эталонный груз 1 кг",
+                            "Подтвердить показания",
+                            "Повторить с грузом 5 кг"
+                        ]
+                    },
+                    {
+                        title: "Проверка и документация",
+                        time: "5 минут",
+                        image: "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=600",
+                        actions: [
+                            "Выполнить контрольное взвешивание",
+                            "Проверить точность (допуск ±0.1%)",
+                            "Записать результаты в журнал",
+                            "Наклеить стикер с датой калибровки"
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        let currentPanel = null;
+        let currentItem = null;
+        let currentPage = 0;
+
+        // Свайп поддержка
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        function togglePanel(type) {
+            const incidentsPanel = document.getElementById('incidents-panel');
+            const instructionsPanel = document.getElementById('instructions-panel');
+            const incidentsBtn = document.querySelector('.main-btn.incidents');
+            const instructionsBtn = document.querySelector('.main-btn.instructions');
+
+            if (type === 'incidents') {
+                if (currentPanel === 'incidents') {
+                    incidentsPanel.classList.remove('show');
+                    incidentsBtn.classList.remove('active');
+                    currentPanel = null;
+                } else {
+                    incidentsPanel.classList.add('show');
+                    instructionsPanel.classList.remove('show');
+                    incidentsBtn.classList.add('active');
+                    instructionsBtn.classList.remove('active');
+                    currentPanel = 'incidents';
+                    renderItems('incidents', incidentsData);
+                }
+            } else {
+                if (currentPanel === 'instructions') {
+                    instructionsPanel.classList.remove('show');
+                    instructionsBtn.classList.remove('active');
+                    currentPanel = null;
+                } else {
+                    instructionsPanel.classList.add('show');
+                    incidentsPanel.classList.remove('show');
+                    instructionsBtn.classList.add('active');
+                    incidentsBtn.classList.remove('active');
+                    currentPanel = 'instructions';
+                    renderItems('instructions', instructionsData);
+                }
+            }
+        }
+
+        function renderItems(type, data) {
+            const list = document.getElementById(`${type}-list`);
+            const itemClass = type === 'incidents' ? 'incident-item' : 'instruction-item';
+            
+            if (data.length === 0) {
+                list.innerHTML = '<div class="no-results">Ничего не найдено</div>';
+                return;
+            }
+
+            list.innerHTML = data.map(item => `
+                <button class="item-btn ${itemClass}" onclick='openModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'>
+                    ${item.title}
+                    <span class="item-pages-count">📄 ${item.pages.length} стр.</span>
+                </button>
+            `).join('');
+        }
+
+        function filterItems(type) {
+            const searchBox = document.querySelector(`#${type}-panel .search-box`);
+            const query = searchBox.value.toLowerCase();
+            const data = type === 'incidents' ? incidentsData : instructionsData;
+            
+            const filtered = data.filter(item => 
+                item.title.toLowerCase().includes(query)
+            );
+            
+            renderItems(type, filtered);
+        }
+
+        function openModal(item) {
+            currentItem = item;
+            currentPage = 0;
+            
+            document.getElementById('modal-title').textContent = item.title;
+            renderPage();
+            renderPageDots();
+            
+            document.getElementById('modal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function renderPage() {
+            const page = currentItem.pages[currentPage];
+            
+            document.getElementById('page-title').textContent = page.title;
+            document.getElementById('modal-time').textContent = `Регламент: ${page.time}`;
+            document.getElementById('modal-img').src = page.image;
+            
+            document.getElementById('modal-actions').innerHTML = page.actions.map((action, index) => `
+                <li>
+                    <span class="action-number">${index + 1}</span>
+                    <span>${action}</span>
+                </li>
+            `).join('');
+
+            // Обновить номер страницы
+            document.getElementById('page-number').textContent = `${currentPage + 1} / ${currentItem.pages.length}`;
+            
+            // Обновить состояние кнопок
+            document.getElementById('prev-btn').disabled = currentPage === 0;
+            document.getElementById('next-btn').disabled = currentPage === currentItem.pages.length - 1;
+            
+            // Обновить точки
+            updatePageDots();
+            
+            // Анимация контента
+            const body = document.getElementById('modal-body');
+            body.style.animation = 'none';
+            body.offsetHeight; // trigger reflow
+            body.style.animation = 'fadeIn 0.3s ease';
+        }
+
+        function renderPageDots() {
+            const dotsContainer = document.getElementById('page-dots');
+            dotsContainer.innerHTML = currentItem.pages.map((_, index) => `
+                <div class="page-dot ${index === currentPage ? 'active' : ''}" onclick="goToPage(${index})"></div>
+            `).join('');
+        }
+
+        function updatePageDots() {
+            const dots = document.querySelectorAll('.page-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentPage);
+            });
+        }
+
+        function changePage(direction) {
+            const newPage = currentPage + direction;
+            if (newPage >= 0 && newPage < currentItem.pages.length) {
+                currentPage = newPage;
+                renderPage();
+            }
+        }
+
+        function goToPage(pageIndex) {
+            currentPage = pageIndex;
+            renderPage();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('show');
+            document.body.style.overflow = '';
+            currentItem = null;
+            currentPage = 0;
+        }
+
+        function closeModalOutside(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                closeModal();
+            }
+        }
+
+        // Свайп для мобильных устройств
+        document.getElementById('modal-content').addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.getElementById('modal-content').addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0) {
+                    // Свайп влево - следующая страница
+                    changePage(1);
+                } else {
+                    // Свайп вправо - предыдущая страница
+                    changePage(-1);
+                }
+            }
+        }
+
+        // Клавиатурная навигация
+        document.addEventListener('keydown', (e) => {
+            if (!document.getElementById('modal').classList.contains('show')) return;
+            
+            if (e.key === 'Escape') {
+                closeModal();
+            } else if (e.key === 'ArrowLeft') {
+                changePage(-1);
+            } else if (e.key === 'ArrowRight') {
+                changePage(1);
+            }
+        });
+    </script>
+</body>
+</html>

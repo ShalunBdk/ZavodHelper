@@ -1,0 +1,998 @@
+{% extends "base.html" %}
+
+{% block title %}Редактор базы знаний{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: #f0f2f5;
+        color: #333;
+    }
+
+    .header {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        padding: 20px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .header h1 {
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .main-container {
+        display: flex;
+        height: calc(100vh - 76px);
+    }
+
+    .sidebar {
+        width: 350px;
+        background: white;
+        border-right: 1px solid #e0e0e0;
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+    }
+
+    .sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .sidebar-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s;
+        background: #ecf0f1;
+        color: #666;
+    }
+
+    .tab-btn.active {
+        color: white;
+    }
+
+    .tab-btn.incidents.active {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    }
+
+    .tab-btn.instructions.active {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #3498db;
+    }
+
+    .items-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+    }
+
+    .item-card {
+        background: #f8f9fa;
+        border: 2px solid transparent;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .item-card:hover {
+        background: #e8f4fc;
+    }
+
+    .item-card.active {
+        border-color: #3498db;
+        background: #e8f4fc;
+    }
+
+    .item-card.incident {
+        border-left: 4px solid #e74c3c;
+    }
+
+    .item-card.instruction {
+        border-left: 4px solid #3498db;
+    }
+
+    .item-card-title {
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .item-card-meta {
+        font-size: 0.85rem;
+        color: #888;
+    }
+
+    .add-item-btn {
+        margin: 15px;
+        width: calc(100% - 30px);
+        padding: 15px;
+        border: 2px dashed #ccc;
+        border-radius: 10px;
+        background: transparent;
+        color: #888;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .add-item-btn:hover {
+        border-color: #3498db;
+        color: #3498db;
+        background: #e8f4fc;
+    }
+
+    .editor {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .editor-empty {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #888;
+        font-size: 1.2rem;
+    }
+
+    .editor-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 30px;
+    }
+
+    .editor-section {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .editor-section h3 {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e0e0e0;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #555;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 20px;
+    }
+
+    .form-row .form-group {
+        flex: 1;
+    }
+
+    .pages-tabs {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+        align-items: center;
+    }
+
+    .page-tab {
+        padding: 10px 20px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-weight: 500;
+    }
+
+    .page-tab:hover {
+        border-color: #3498db;
+    }
+
+    .page-tab.active {
+        background: #3498db;
+        border-color: #3498db;
+        color: white;
+    }
+
+    .add-page-btn {
+        padding: 10px 20px;
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        background: transparent;
+        cursor: pointer;
+        color: #888;
+        transition: all 0.3s;
+    }
+
+    .add-page-btn:hover {
+        border-color: #27ae60;
+        color: #27ae60;
+    }
+
+    .page-editor {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .actions-list {
+        margin-top: 15px;
+    }
+
+    .action-item {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+        align-items: center;
+    }
+
+    .action-number {
+        width: 30px;
+        height: 30px;
+        background: #3498db;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .action-input {
+        flex: 1;
+        padding: 10px 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1rem;
+    }
+
+    .action-input:focus {
+        outline: none;
+        border-color: #3498db;
+    }
+
+    .action-remove {
+        width: 36px;
+        height: 36px;
+        border: none;
+        background: #fee;
+        color: #e74c3c;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1.2rem;
+        transition: all 0.3s;
+    }
+
+    .action-remove:hover {
+        background: #e74c3c;
+        color: white;
+    }
+
+    .action-drag {
+        width: 36px;
+        height: 36px;
+        border: none;
+        background: #f0f0f0;
+        color: #888;
+        border-radius: 8px;
+        cursor: grab;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .add-action-btn {
+        width: 100%;
+        padding: 12px;
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        background: transparent;
+        color: #888;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: all 0.3s;
+    }
+
+    .add-action-btn:hover {
+        border-color: #27ae60;
+        color: #27ae60;
+    }
+
+    .image-upload {
+        border: 2px dashed #ccc;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        background: #fafafa;
+    }
+
+    .image-upload:hover {
+        border-color: #3498db;
+        background: #e8f4fc;
+    }
+
+    .image-upload.has-image {
+        padding: 10px;
+    }
+
+    .image-preview {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 8px;
+    }
+
+    .image-upload-text {
+        color: #888;
+        margin-top: 10px;
+    }
+
+    .image-upload-icon {
+        font-size: 3rem;
+        color: #ccc;
+    }
+
+    .editor-footer {
+        padding: 20px 30px;
+        background: white;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .json-preview {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 20px;
+        border-radius: 10px;
+        font-family: 'Consolas', 'Monaco', monospace;
+        font-size: 0.85rem;
+        max-height: 400px;
+        overflow: auto;
+        white-space: pre-wrap;
+    }
+
+    @media (max-width: 1024px) {
+        .main-container {
+            flex-direction: column;
+        }
+        .sidebar {
+            width: 100%;
+            height: auto;
+            max-height: 300px;
+        }
+        .form-row {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<header class="header">
+    <h1>Редактор базы знаний</h1>
+    <div class="header-actions">
+        <a href="/" class="btn btn-primary">← На главную</a>
+        <button class="btn btn-secondary" onclick="showExportModal()">Экспорт</button>
+        <button class="btn btn-secondary" onclick="showImportModal()">Импорт</button>
+    </div>
+</header>
+
+<div class="main-container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-tabs">
+                <button class="tab-btn incidents active" onclick="switchTab('incidents')">Инциденты</button>
+                <button class="tab-btn instructions" onclick="switchTab('instructions')">Инструкции</button>
+            </div>
+            <input type="text" class="search-input" placeholder="Поиск..." oninput="filterList(this.value)">
+        </div>
+        <div class="items-list" id="items-list"></div>
+        <button class="add-item-btn" onclick="addNewItem()">+ Добавить новый</button>
+    </aside>
+
+    <main class="editor">
+        <div class="editor-empty" id="editor-empty">
+            <div style="text-align: center;">
+                <div style="font-size: 4rem; margin-bottom: 20px;">Редактор</div>
+                <div>Выберите элемент для редактирования<br>или создайте новый</div>
+            </div>
+        </div>
+
+        <div class="editor-content" id="editor-content" style="display: none;">
+            <div class="editor-section">
+                <h3>Основная информация</h3>
+                <div class="form-group">
+                    <label>Название</label>
+                    <input type="text" class="form-control" id="item-title" placeholder="Например: Потекла рубашка">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Тип</label>
+                        <select class="form-control" id="item-type">
+                            <option value="incident">Инцидент</option>
+                            <option value="instruction">Инструкция</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>ID</label>
+                        <input type="text" class="form-control" id="item-id" placeholder="Авто" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="editor-section">
+                <h3>Страницы</h3>
+                <div class="pages-tabs" id="pages-tabs"></div>
+                <div class="page-editor" id="page-editor"></div>
+            </div>
+        </div>
+
+        <div class="editor-footer" id="editor-footer" style="display: none;">
+            <button class="btn btn-danger" onclick="deleteCurrentItem()">Удалить</button>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" onclick="duplicateItem()">Дублировать</button>
+                <button class="btn btn-primary" onclick="saveCurrentItem()">Сохранить</button>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Export Modal -->
+<div class="modal-overlay" id="export-modal">
+    <div class="modal" style="max-width: 700px;">
+        <h3>Экспорт данных</h3>
+        <div class="json-preview" id="json-output"></div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal('export-modal')">Закрыть</button>
+            <button class="btn btn-primary" onclick="copyJson()">Копировать</button>
+            <button class="btn btn-success" onclick="downloadJson()">Скачать</button>
+        </div>
+    </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal-overlay" id="import-modal">
+    <div class="modal">
+        <h3>Импорт данных</h3>
+        <div class="form-group">
+            <label>Вставьте JSON или выберите файл</label>
+            <textarea class="form-control" id="import-json" rows="10" placeholder='{"incidents": [...], "instructions": [...]}'></textarea>
+        </div>
+        <input type="file" id="import-file" accept=".json" style="display: none;" onchange="loadFile(event)">
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal('import-modal')">Отмена</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">Выбрать файл</button>
+            <button class="btn btn-primary" onclick="importData()">Импортировать</button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirm-modal">
+    <div class="modal">
+        <h3 id="confirm-title">Подтверждение</h3>
+        <p id="confirm-message">Вы уверены?</p>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal('confirm-modal')">Отмена</button>
+            <button class="btn btn-danger" id="confirm-btn">Удалить</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Data from server
+    let data = {
+        incidents: {{ incidents | tojson | safe }},
+        instructions: {{ instructions | tojson | safe }}
+    };
+
+    let currentTab = 'incidents';
+    let currentItem = null;
+    let currentPageIndex = 0;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        renderItemsList();
+    });
+
+    function switchTab(tab) {
+        currentTab = tab;
+        currentItem = null;
+        currentPageIndex = 0;
+
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.tab-btn.${tab}`).classList.add('active');
+
+        renderItemsList();
+        hideEditor();
+    }
+
+    function renderItemsList() {
+        const list = document.getElementById('items-list');
+        const items = data[currentTab];
+
+        list.innerHTML = items.map((item, index) => `
+            <div class="item-card ${currentTab === 'incidents' ? 'incident' : 'instruction'} ${currentItem && currentItem.id === item.id ? 'active' : ''}"
+                 onclick="selectItem(${index})">
+                <div class="item-card-title">${item.title}</div>
+                <div class="item-card-meta">${item.pages.length} стр.</div>
+            </div>
+        `).join('');
+    }
+
+    function filterList(query) {
+        const items = data[currentTab];
+        const filtered = items.filter(item =>
+            item.title.toLowerCase().includes(query.toLowerCase())
+        );
+
+        const list = document.getElementById('items-list');
+        list.innerHTML = filtered.map((item) => {
+            const index = items.findIndex(i => i.id === item.id);
+            return `
+                <div class="item-card ${currentTab === 'incidents' ? 'incident' : 'instruction'} ${currentItem && currentItem.id === item.id ? 'active' : ''}"
+                     onclick="selectItem(${index})">
+                    <div class="item-card-title">${item.title}</div>
+                    <div class="item-card-meta">${item.pages.length} стр.</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function selectItem(index) {
+        currentItem = { ...data[currentTab][index] };
+        currentItem._index = index;
+        currentPageIndex = 0;
+        showEditor();
+        renderItemsList();
+    }
+
+    function showEditor() {
+        document.getElementById('editor-empty').style.display = 'none';
+        document.getElementById('editor-content').style.display = 'block';
+        document.getElementById('editor-footer').style.display = 'flex';
+
+        document.getElementById('item-title').value = currentItem.title;
+        document.getElementById('item-type').value = currentTab === 'incidents' ? 'incident' : 'instruction';
+        document.getElementById('item-id').value = currentItem.id;
+
+        renderPagesTabs();
+        renderPageEditor();
+    }
+
+    function hideEditor() {
+        document.getElementById('editor-empty').style.display = 'flex';
+        document.getElementById('editor-content').style.display = 'none';
+        document.getElementById('editor-footer').style.display = 'none';
+    }
+
+    function renderPagesTabs() {
+        const container = document.getElementById('pages-tabs');
+        container.innerHTML = currentItem.pages.map((page, index) => `
+            <button class="page-tab ${index === currentPageIndex ? 'active' : ''}" onclick="switchPage(${index})">
+                ${index + 1}. ${page.title.substring(0, 15)}${page.title.length > 15 ? '...' : ''}
+            </button>
+        `).join('') + `
+            <button class="add-page-btn" onclick="addPage()">+ Страница</button>
+        `;
+    }
+
+    function switchPage(index) {
+        saveCurrentPage();
+        currentPageIndex = index;
+        renderPagesTabs();
+        renderPageEditor();
+    }
+
+    function renderPageEditor() {
+        const page = currentItem.pages[currentPageIndex];
+        const container = document.getElementById('page-editor');
+
+        container.innerHTML = `
+            <div class="page-header">
+                <h4>Страница ${currentPageIndex + 1} из ${currentItem.pages.length}</h4>
+                ${currentItem.pages.length > 1 ? `
+                    <button class="btn btn-danger btn-sm" onclick="deletePage(${currentPageIndex})">Удалить страницу</button>
+                ` : ''}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Заголовок страницы</label>
+                    <input type="text" class="form-control" id="page-title" value="${page.title}" placeholder="Например: Диагностика проблемы">
+                </div>
+                <div class="form-group">
+                    <label>Регламент времени</label>
+                    <input type="text" class="form-control" id="page-time" value="${page.time}" placeholder="Например: 10 минут">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Изображение</label>
+                <div class="image-upload ${page.image ? 'has-image' : ''}" onclick="document.getElementById('image-input').click()">
+                    ${page.image ? `
+                        <img src="${page.image}" class="image-preview" alt="Preview">
+                        <div class="image-upload-text">Нажмите, чтобы изменить</div>
+                    ` : `
+                        <div class="image-upload-icon">Изображение</div>
+                        <div class="image-upload-text">Нажмите или перетащите изображение</div>
+                    `}
+                </div>
+                <input type="file" id="image-input" accept="image/*" style="display: none;" onchange="uploadImage(event)">
+                <input type="text" class="form-control" id="page-image" value="${page.image || ''}" placeholder="Или вставьте URL изображения" style="margin-top: 10px;">
+            </div>
+
+            <div class="form-group">
+                <label>Действия</label>
+                <div class="actions-list" id="actions-list">
+                    ${page.actions.map((action, index) => `
+                        <div class="action-item">
+                            <span class="action-drag">:</span>
+                            <span class="action-number">${index + 1}</span>
+                            <input type="text" class="action-input" value="${action}" onchange="updateAction(${index}, this.value)">
+                            <button class="action-remove" onclick="removeAction(${index})">x</button>
+                        </div>
+                    `).join('')}
+                </div>
+                <button class="add-action-btn" onclick="addAction()">+ Добавить действие</button>
+            </div>
+        `;
+    }
+
+    function saveCurrentPage() {
+        if (!currentItem) return;
+
+        const page = currentItem.pages[currentPageIndex];
+        const titleEl = document.getElementById('page-title');
+        const timeEl = document.getElementById('page-time');
+        const imageEl = document.getElementById('page-image');
+
+        if (titleEl) page.title = titleEl.value;
+        if (timeEl) page.time = timeEl.value;
+        if (imageEl) page.image = imageEl.value;
+    }
+
+    function addPage() {
+        saveCurrentPage();
+        currentItem.pages.push({
+            title: "Новая страница",
+            time: "5 минут",
+            image: "",
+            actions: ["Действие 1"]
+        });
+        currentPageIndex = currentItem.pages.length - 1;
+        renderPagesTabs();
+        renderPageEditor();
+    }
+
+    function deletePage(index) {
+        if (currentItem.pages.length <= 1) {
+            showToast('Нельзя удалить последнюю страницу', 'error');
+            return;
+        }
+
+        currentItem.pages.splice(index, 1);
+        if (currentPageIndex >= currentItem.pages.length) {
+            currentPageIndex = currentItem.pages.length - 1;
+        }
+        renderPagesTabs();
+        renderPageEditor();
+    }
+
+    function addAction() {
+        saveCurrentPage();
+        currentItem.pages[currentPageIndex].actions.push("Новое действие");
+        renderPageEditor();
+    }
+
+    function removeAction(index) {
+        saveCurrentPage();
+        currentItem.pages[currentPageIndex].actions.splice(index, 1);
+        renderPageEditor();
+    }
+
+    function updateAction(index, value) {
+        currentItem.pages[currentPageIndex].actions[index] = value;
+    }
+
+    async function uploadImage(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Show loading state
+        const uploadDiv = document.querySelector('.image-upload');
+        const originalContent = uploadDiv.innerHTML;
+        uploadDiv.innerHTML = '<div style="padding: 20px;">Загрузка...</div>';
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Upload failed');
+            }
+
+            const result = await response.json();
+
+            // Update image URL
+            document.getElementById('page-image').value = result.url;
+            currentItem.pages[currentPageIndex].image = result.url;
+            renderPageEditor();
+            showToast('Изображение загружено', 'success');
+
+        } catch (error) {
+            uploadDiv.innerHTML = originalContent;
+            showToast('Ошибка загрузки: ' + error.message, 'error');
+        }
+    }
+
+    function addNewItem() {
+        const newId = Math.max(...data[currentTab].map(i => i.id), 0) + 1;
+        const newItem = {
+            id: newId,
+            title: currentTab === 'incidents' ? "Новый инцидент" : "Новая инструкция",
+            pages: [
+                {
+                    title: "Страница 1",
+                    time: "5 минут",
+                    image: "",
+                    actions: ["Действие 1"]
+                }
+            ]
+        };
+
+        data[currentTab].push(newItem);
+        renderItemsList();
+        selectItem(data[currentTab].length - 1);
+        showToast('Создан новый элемент');
+    }
+
+    async function saveCurrentItem() {
+        if (!currentItem) return;
+
+        saveCurrentPage();
+        currentItem.title = document.getElementById('item-title').value;
+
+        // Prepare data for API
+        const itemData = {
+            title: currentItem.title,
+            item_type: currentTab === 'incidents' ? 'incident' : 'instruction',
+            pages: currentItem.pages.map(page => ({
+                title: page.title,
+                time: page.time,
+                image: page.image,
+                actions: [...page.actions]  // Deep copy actions
+            }))
+        };
+
+        try {
+            let savedItem;
+            if (currentItem.id) {
+                // Update existing
+                savedItem = await api(`/items/${currentItem.id}`, {
+                    method: 'PUT',
+                    body: itemData
+                });
+            } else {
+                // Create new
+                savedItem = await api('/items', {
+                    method: 'POST',
+                    body: itemData
+                });
+            }
+
+            // Update local data from server response
+            const idx = currentItem._index;
+            const serverItem = {
+                id: savedItem.id,
+                title: savedItem.title,
+                pages: savedItem.pages.map(p => ({
+                    title: p.title,
+                    time: p.time,
+                    image: p.image || '',
+                    actions: p.actions.map(a => a.text)
+                }))
+            };
+
+            data[currentTab][idx] = serverItem;
+            currentItem = { ...serverItem };
+            currentItem._index = idx;
+
+            renderItemsList();
+            showToast('Сохранено!', 'success');
+        } catch (error) {
+            showToast('Ошибка сохранения: ' + error.message, 'error');
+        }
+    }
+
+    function deleteCurrentItem() {
+        if (!currentItem) return;
+
+        document.getElementById('confirm-title').textContent = 'Удаление';
+        document.getElementById('confirm-message').textContent = `Удалить "${currentItem.title}"?`;
+        document.getElementById('confirm-btn').onclick = async () => {
+            try {
+                if (currentItem.id) {
+                    await api(`/items/${currentItem.id}`, { method: 'DELETE' });
+                }
+
+                data[currentTab].splice(currentItem._index, 1);
+                currentItem = null;
+                hideEditor();
+                renderItemsList();
+                closeModal('confirm-modal');
+                showToast('Удалено');
+            } catch (error) {
+                showToast('Ошибка удаления: ' + error.message, 'error');
+            }
+        };
+        document.getElementById('confirm-modal').classList.add('show');
+    }
+
+    function duplicateItem() {
+        if (!currentItem) return;
+
+        saveCurrentPage();
+        const newItem = JSON.parse(JSON.stringify(currentItem));
+        newItem.id = Math.max(...data[currentTab].map(i => i.id), 0) + 1;
+        newItem.title += ' (копия)';
+        delete newItem._index;
+
+        data[currentTab].push(newItem);
+        renderItemsList();
+        selectItem(data[currentTab].length - 1);
+        showToast('Создана копия');
+    }
+
+    async function showExportModal() {
+        if (currentItem) saveCurrentPage();
+
+        try {
+            const exportData = await api('/export');
+            document.getElementById('json-output').textContent = JSON.stringify(exportData, null, 2);
+            document.getElementById('export-modal').classList.add('show');
+        } catch (error) {
+            showToast('Ошибка экспорта: ' + error.message, 'error');
+        }
+    }
+
+    function copyJson() {
+        const json = document.getElementById('json-output').textContent;
+        navigator.clipboard.writeText(json);
+        showToast('Скопировано в буфер обмена', 'success');
+    }
+
+    function downloadJson() {
+        const json = document.getElementById('json-output').textContent;
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'knowledge-base.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Файл скачан', 'success');
+    }
+
+    function showImportModal() {
+        document.getElementById('import-json').value = '';
+        document.getElementById('import-modal').classList.add('show');
+    }
+
+    function loadFile(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('import-json').value = e.target.result;
+            };
+            reader.readAsText(file);
+        }
+    }
+
+    async function importData() {
+        try {
+            const json = document.getElementById('import-json').value;
+            const imported = JSON.parse(json);
+
+            await api('/import', {
+                method: 'POST',
+                body: imported
+            });
+
+            // Refresh data
+            const newData = await api('/export');
+            data.incidents = newData.incidents;
+            data.instructions = newData.instructions;
+
+            currentItem = null;
+            hideEditor();
+            renderItemsList();
+            closeModal('import-modal');
+            showToast('Данные импортированы!', 'success');
+        } catch (e) {
+            showToast('Ошибка формата JSON', 'error');
+        }
+    }
+
+    // Close modals on outside click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                overlay.classList.remove('show');
+            }
+        });
+    });
+</script>
+{% endblock %}

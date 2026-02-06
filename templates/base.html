@@ -167,8 +167,9 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // API base URL
-        const API_BASE = '/api';
+        // API base URL - determine from current path for reverse proxy support
+        const BASE_PATH = window.location.pathname.replace(/\/(editor)?$/, '');
+        const API_BASE = (BASE_PATH === '' ? '' : BASE_PATH) + '/api';
 
         // Show toast notification
         function showToast(message, type = '') {

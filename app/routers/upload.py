@@ -79,7 +79,7 @@ async def upload_image(file: UploadFile = File(...)):
             f.write(processed)
 
         return {
-            "url": f"/uploads/{filename}",
+            "url": f"uploads/{filename}",
             "filename": filename,
             "size": len(processed)
         }

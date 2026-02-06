@@ -930,7 +930,7 @@
             const formData = new FormData();
             formData.append('file', file);
 
-            const response = await fetch('/api/upload', {
+            const response = await fetch(API_BASE + '/upload', {
                 method: 'POST',
                 body: formData
             });
@@ -942,9 +942,10 @@
 
             const result = await response.json();
 
-            // Update image URL
-            document.getElementById('page-image').value = result.url;
-            currentItem.pages[currentPageIndex].image = result.url;
+            // Update image URL with base path
+            const imageUrl = BASE_PATH + '/' + result.url;
+            document.getElementById('page-image').value = imageUrl;
+            currentItem.pages[currentPageIndex].image = imageUrl;
             renderPageEditor();
             showToast('Изображение загружено', 'success');
 

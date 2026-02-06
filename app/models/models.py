@@ -13,6 +13,25 @@ class ItemType(str, enum.Enum):
     INSTRUCTION = "instruction"
 
 
+class Category(Base):
+    """Category for grouping items."""
+    __tablename__ = "categories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    item_type = Column(Enum(ItemType), nullable=False, index=True)
+    icon = Column(String(50), default="📁")
+    color = Column(String(20), default="#3498db")
+    order = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    items = relationship("Item", back_populates="category")
+
+    def __repr__(self):
+        return f"<Category(id={self.id}, name='{self.name}', type={self.item_type})>"
+
+
 class Item(Base):
     """Main entity: Incident or Instruction."""
     __tablename__ = "items"
@@ -20,10 +39,12 @@ class Item(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False, index=True)
     item_type = Column(Enum(ItemType), nullable=False, index=True)
+    category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
+    category = relationship("Category", back_populates="items")
     pages = relationship(
         "Page",
         back_populates="item",

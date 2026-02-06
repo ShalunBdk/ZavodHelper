@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Вариант А - Два уровня</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: #fff;
+            min-height: 100vh;
+            font-size: 18px;
+        }
+        .header {
+            background: #16213e;
+            padding: 16px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 16px;
+        }
+
+        .search-box {
+            position: relative;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .search-input {
+            width: 100%;
+            padding: 18px 20px 18px 54px;
+            font-size: 20px;
+            border: 2px solid #3d5a80;
+            border-radius: 12px;
+            background: #0f0f23;
+            color: #fff;
+            outline: none;
+        }
+        .search-input:focus {
+            border-color: #4dabf7;
+        }
+        .search-input::placeholder {
+            color: #6c757d;
+        }
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 22px;
+            color: #6c757d;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .block-btn {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+            padding: 28px 24px;
+            margin-bottom: 14px;
+            font-size: 24px;
+            font-weight: bold;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            text-align: left;
+            min-height: 80px;
+        }
+        .block-btn .icon { font-size: 32px; }
+        .block-btn .count {
+            margin-left: auto;
+            background: rgba(0,0,0,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 18px;
+        }
+
+        .block-btn.red { background: #e74c3c; color: white; }
+        .block-btn.orange { background: #e67e22; color: white; }
+        .block-btn.blue { background: #3498db; color: white; }
+        .block-btn.green { background: #27ae60; color: white; }
+        .block-btn.purple { background: #9b59b6; color: white; }
+
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #4a5568;
+            color: white;
+            border: none;
+            padding: 16px 28px;
+            font-size: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            min-height: 60px;
+        }
+        .back-btn:active { background: #2d3748; }
+
+        .incident-btn {
+            display: block;
+            width: 100%;
+            padding: 24px;
+            margin-bottom: 12px;
+            font-size: 22px;
+            background: #2d3748;
+            color: white;
+            border: 3px solid #4a5568;
+            border-radius: 14px;
+            text-align: left;
+            cursor: pointer;
+            min-height: 75px;
+        }
+        .incident-btn:active { background: #4a5568; border-color: #68d391; }
+
+        .note {
+            text-align: center;
+            padding: 24px;
+            background: #2d3748;
+            border-radius: 12px;
+            margin-top: 24px;
+            font-size: 16px;
+            color: #a0aec0;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Экран 1: Список блоков -->
+    <div id="screen1" class="screen active">
+        <div class="header">
+            <h1>ИНЦИДЕНТЫ</h1>
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" placeholder="Поиск инцидента...">
+            </div>
+        </div>
+        <div class="container">
+            <button class="block-btn red" onclick="showScreen2('Розлив')">
+                <span class="icon">🍶</span>
+                <span>Розлив</span>
+                <span class="count">4</span>
+            </button>
+            <button class="block-btn orange" onclick="showScreen2('Твисты')">
+                <span class="icon">🔧</span>
+                <span>Твисты</span>
+                <span class="count">3</span>
+            </button>
+            <button class="block-btn blue" onclick="showScreen2('Этикетировщик')">
+                <span class="icon">🏷️</span>
+                <span>Этикетировщик</span>
+                <span class="count">5</span>
+            </button>
+            <button class="block-btn green" onclick="showScreen2('Изготовление')">
+                <span class="icon">⚙️</span>
+                <span>Изготовление</span>
+                <span class="count">6</span>
+            </button>
+            <button class="block-btn purple" onclick="showScreen2('Упаковка')">
+                <span class="icon">📦</span>
+                <span>Упаковка</span>
+                <span class="count">2</span>
+            </button>
+
+            <div class="note">
+                <b>Вариант А: Два уровня</b><br>
+                Сначала выбираем блок, потом видим инциденты внутри.<br>
+                Поиск ищет по всем блокам.
+            </div>
+        </div>
+    </div>
+
+    <!-- Экран 2: Инциденты внутри блока -->
+    <div id="screen2" class="screen">
+        <div class="header">
+            <h1 id="block-title">РОЗЛИВ</h1>
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" placeholder="Поиск в разделе...">
+            </div>
+        </div>
+        <div class="container">
+            <button class="back-btn" onclick="showScreen1()">← Назад</button>
+
+            <button class="incident-btn">Потекла рубашка</button>
+            <button class="incident-btn">Сбой дозатора</button>
+            <button class="incident-btn">Засор фильтра</button>
+            <button class="incident-btn">Ошибка датчика уровня</button>
+        </div>
+    </div>
+
+    <script>
+        function showScreen1() {
+            document.getElementById('screen1').classList.add('active');
+            document.getElementById('screen2').classList.remove('active');
+        }
+        function showScreen2(name) {
+            document.getElementById('block-title').textContent = name.toUpperCase();
+            document.getElementById('screen1').classList.remove('active');
+            document.getElementById('screen2').classList.add('active');
+        }
+    </script>
+</body>
+</html>

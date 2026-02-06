@@ -7,14 +7,32 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.database import SessionLocal, init_db
-from app.models.models import ItemType
-from app.schemas import ItemCreate, PageCreate
-from app.crud import create_item, get_items
+from app.models.models import ItemType, Category
+from app.schemas import ItemCreate, PageCreate, CategoryCreate
+from app.crud import create_item, get_items, create_category, get_categories
 
-# Demo data
+
+# Demo categories
+DEMO_CATEGORIES = {
+    "incidents": [
+        {"name": "Розлив", "icon": "🍶", "color": "#e74c3c"},
+        {"name": "Твисты", "icon": "🔧", "color": "#e67e22"},
+        {"name": "Этикетировщик", "icon": "🏷️", "color": "#3498db"},
+        {"name": "Изготовление", "icon": "⚙️", "color": "#27ae60"},
+        {"name": "Упаковка", "icon": "📦", "color": "#9b59b6"},
+    ],
+    "instructions": [
+        {"name": "Запуск линий", "icon": "▶️", "color": "#2ecc71"},
+        {"name": "Техобслуживание", "icon": "🔧", "color": "#f39c12"},
+        {"name": "Санитария", "icon": "🧹", "color": "#1abc9c"},
+    ]
+}
+
+# Demo data - category_name refers to categories above
 DEMO_INCIDENTS = [
     {
         "title": "Потекла рубашка",
+        "category_name": "Розлив",
         "pages": [
             {
                 "title": "Диагностика проблемы",
@@ -55,6 +73,7 @@ DEMO_INCIDENTS = [
     },
     {
         "title": "Застряла этикетка",
+        "category_name": "Этикетировщик",
         "pages": [
             {
                 "title": "Остановка и доступ",
@@ -93,6 +112,7 @@ DEMO_INCIDENTS = [
     },
     {
         "title": "Сбой конвейера",
+        "category_name": "Изготовление",
         "pages": [
             {
                 "title": "Аварийная остановка",
@@ -147,6 +167,7 @@ DEMO_INCIDENTS = [
 DEMO_INSTRUCTIONS = [
     {
         "title": "Запуск линии розлива",
+        "category_name": "Запуск линий",
         "pages": [
             {
                 "title": "Подготовка к запуску",
@@ -185,6 +206,7 @@ DEMO_INSTRUCTIONS = [
     },
     {
         "title": "Ежедневное ТО конвейера",
+        "category_name": "Техобслуживание",
         "pages": [
             {
                 "title": "Визуальный осмотр",
@@ -223,6 +245,7 @@ DEMO_INSTRUCTIONS = [
     },
     {
         "title": "Санитарная обработка линии",
+        "category_name": "Санитария",
         "pages": [
             {
                 "title": "Подготовка к обработке",
@@ -286,11 +309,37 @@ def init_demo_data():
             print("Database already contains data. Skipping demo data insertion.")
             return
 
+        # Create categories first
+        print("Adding categories...")
+        category_map = {}
+
+        for cat_data in DEMO_CATEGORIES["incidents"]:
+            cat = create_category(db, CategoryCreate(
+                name=cat_data["name"],
+                item_type=ItemType.INCIDENT,
+                icon=cat_data["icon"],
+                color=cat_data["color"]
+            ))
+            category_map[cat_data["name"]] = cat.id
+            print(f"  + {cat_data['icon']} {cat_data['name']}")
+
+        for cat_data in DEMO_CATEGORIES["instructions"]:
+            cat = create_category(db, CategoryCreate(
+                name=cat_data["name"],
+                item_type=ItemType.INSTRUCTION,
+                icon=cat_data["icon"],
+                color=cat_data["color"]
+            ))
+            category_map[cat_data["name"]] = cat.id
+            print(f"  + {cat_data['icon']} {cat_data['name']}")
+
         print("Adding demo incidents...")
         for incident_data in DEMO_INCIDENTS:
+            category_id = category_map.get(incident_data.get("category_name"))
             item = ItemCreate(
                 title=incident_data["title"],
                 item_type=ItemType.INCIDENT,
+                category_id=category_id,
                 pages=[
                     PageCreate(
                         title=p["title"],
@@ -306,9 +355,11 @@ def init_demo_data():
 
         print("Adding demo instructions...")
         for instruction_data in DEMO_INSTRUCTIONS:
+            category_id = category_map.get(instruction_data.get("category_name"))
             item = ItemCreate(
                 title=instruction_data["title"],
                 item_type=ItemType.INSTRUCTION,
+                category_id=category_id,
                 pages=[
                     PageCreate(
                         title=p["title"],
@@ -323,6 +374,7 @@ def init_demo_data():
             print(f"  + {instruction_data['title']}")
 
         print("\nDemo data initialized successfully!")
+        print(f"  - {len(DEMO_CATEGORIES['incidents']) + len(DEMO_CATEGORIES['instructions'])} categories")
         print(f"  - {len(DEMO_INCIDENTS)} incidents")
         print(f"  - {len(DEMO_INSTRUCTIONS)} instructions")
 

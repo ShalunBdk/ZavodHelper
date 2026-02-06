@@ -137,6 +137,12 @@
         color: #888;
     }
 
+    .item-card-category {
+        font-size: 0.8rem;
+        color: #666;
+        margin-top: 4px;
+    }
+
     .add-item-btn {
         margin: 15px;
         width: calc(100% - 30px);
@@ -435,6 +441,7 @@
     <h1>Редактор базы знаний</h1>
     <div class="header-actions">
         <a href="/" class="btn btn-primary">← На главную</a>
+        <button class="btn btn-secondary" onclick="showCategoriesModal()">Категории</button>
         <button class="btn btn-secondary" onclick="showExportModal()">Экспорт</button>
         <button class="btn btn-secondary" onclick="showImportModal()">Импорт</button>
     </div>
@@ -471,12 +478,18 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Тип</label>
-                        <select class="form-control" id="item-type">
+                        <select class="form-control" id="item-type" onchange="updateCategoryOptions()">
                             <option value="incident">Инцидент</option>
                             <option value="instruction">Инструкция</option>
                         </select>
                     </div>
                     <div class="form-group">
+                        <label>Категория</label>
+                        <select class="form-control" id="item-category">
+                            <option value="">-- Без категории --</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 0.5;">
                         <label>ID</label>
                         <input type="text" class="form-control" id="item-id" placeholder="Авто" readonly>
                     </div>
@@ -541,6 +554,36 @@
         </div>
     </div>
 </div>
+
+<!-- Categories Modal -->
+<div class="modal-overlay" id="categories-modal">
+    <div class="modal" style="max-width: 600px;">
+        <h3>Управление категориями</h3>
+        <div class="sidebar-tabs" style="margin-bottom: 20px;">
+            <button class="tab-btn incidents" id="cat-tab-incidents" onclick="switchCategoryTab('incident')">Инциденты</button>
+            <button class="tab-btn instructions" id="cat-tab-instructions" onclick="switchCategoryTab('instruction')">Инструкции</button>
+        </div>
+        <div id="categories-list-modal" style="max-height: 400px; overflow-y: auto;"></div>
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+            <h4 style="margin-bottom: 15px;">Добавить категорию</h4>
+            <div class="form-row">
+                <div class="form-group">
+                    <input type="text" class="form-control" id="new-cat-name" placeholder="Название">
+                </div>
+                <div class="form-group" style="flex: 0.3;">
+                    <input type="text" class="form-control" id="new-cat-icon" placeholder="Иконка" value="📁">
+                </div>
+                <div class="form-group" style="flex: 0.3;">
+                    <input type="color" class="form-control" id="new-cat-color" value="#3498db" style="height: 42px; padding: 4px;">
+                </div>
+            </div>
+            <button class="btn btn-success" onclick="addCategory()" style="width: 100%;">+ Добавить</button>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal('categories-modal')">Закрыть</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -551,14 +594,118 @@
         instructions: {{ instructions | tojson | safe }}
     };
 
+    let categories = [];
     let currentTab = 'incidents';
     let currentItem = null;
     let currentPageIndex = 0;
+    let currentCategoryTab = 'incident';
 
     // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadCategories();
         renderItemsList();
     });
+
+    async function loadCategories() {
+        try {
+            categories = await api('/categories');
+        } catch (error) {
+            console.error('Failed to load categories:', error);
+        }
+    }
+
+    function getCategoriesForType(type) {
+        return categories.filter(c => c.item_type === type);
+    }
+
+    function updateCategoryOptions() {
+        const select = document.getElementById('item-category');
+        const type = document.getElementById('item-type').value;
+        const cats = getCategoriesForType(type);
+
+        select.innerHTML = '<option value="">-- Без категории --</option>' +
+            cats.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+
+        if (currentItem && currentItem.category_id) {
+            select.value = currentItem.category_id;
+        }
+    }
+
+    // Categories modal
+    function showCategoriesModal() {
+        currentCategoryTab = currentTab === 'incidents' ? 'incident' : 'instruction';
+        renderCategoriesModal();
+        document.getElementById('categories-modal').classList.add('show');
+    }
+
+    function switchCategoryTab(type) {
+        currentCategoryTab = type;
+        renderCategoriesModal();
+    }
+
+    function renderCategoriesModal() {
+        // Update tabs
+        document.getElementById('cat-tab-incidents').classList.toggle('active', currentCategoryTab === 'incident');
+        document.getElementById('cat-tab-instructions').classList.toggle('active', currentCategoryTab === 'instruction');
+
+        const cats = getCategoriesForType(currentCategoryTab);
+        const container = document.getElementById('categories-list-modal');
+
+        if (cats.length === 0) {
+            container.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">Нет категорий</div>';
+            return;
+        }
+
+        container.innerHTML = cats.map(cat => `
+            <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #f8f9fa; border-radius: 8px; margin-bottom: 8px;">
+                <span style="font-size: 1.5rem;">${cat.icon}</span>
+                <span style="flex: 1; font-weight: 500;">${cat.name}</span>
+                <span style="background: ${cat.color}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.85rem;">${cat.items_count}</span>
+                <button class="btn btn-danger btn-sm" onclick="deleteCategory(${cat.id})" style="padding: 6px 12px;">✕</button>
+            </div>
+        `).join('');
+    }
+
+    async function addCategory() {
+        const name = document.getElementById('new-cat-name').value.trim();
+        const icon = document.getElementById('new-cat-icon').value.trim() || '📁';
+        const color = document.getElementById('new-cat-color').value;
+
+        if (!name) {
+            showToast('Введите название', 'error');
+            return;
+        }
+
+        try {
+            const newCat = await api('/categories', {
+                method: 'POST',
+                body: {
+                    name,
+                    item_type: currentCategoryTab,
+                    icon,
+                    color
+                }
+            });
+
+            categories.push(newCat);
+            document.getElementById('new-cat-name').value = '';
+            renderCategoriesModal();
+            showToast('Категория добавлена', 'success');
+        } catch (error) {
+            showToast('Ошибка: ' + error.message, 'error');
+        }
+    }
+
+    async function deleteCategory(id) {
+        try {
+            await api(`/categories/${id}`, { method: 'DELETE' });
+            categories = categories.filter(c => c.id !== id);
+            renderCategoriesModal();
+            showToast('Категория удалена');
+        } catch (error) {
+            showToast('Ошибка: ' + error.message, 'error');
+        }
+    }
 
     function switchTab(tab) {
         currentTab = tab;
@@ -576,13 +723,18 @@
         const list = document.getElementById('items-list');
         const items = data[currentTab];
 
-        list.innerHTML = items.map((item, index) => `
-            <div class="item-card ${currentTab === 'incidents' ? 'incident' : 'instruction'} ${currentItem && currentItem.id === item.id ? 'active' : ''}"
-                 onclick="selectItem(${index})">
-                <div class="item-card-title">${item.title}</div>
-                <div class="item-card-meta">${item.pages.length} стр.</div>
-            </div>
-        `).join('');
+        list.innerHTML = items.map((item, index) => {
+            const cat = categories.find(c => c.id === item.category_id);
+            const catLabel = cat ? `${cat.icon} ${cat.name}` : '';
+            return `
+                <div class="item-card ${currentTab === 'incidents' ? 'incident' : 'instruction'} ${currentItem && currentItem.id === item.id ? 'active' : ''}"
+                     onclick="selectItem(${index})">
+                    <div class="item-card-title">${item.title}</div>
+                    <div class="item-card-meta">${item.pages.length} стр.</div>
+                    ${catLabel ? `<div class="item-card-category">${catLabel}</div>` : ''}
+                </div>
+            `;
+        }).join('');
     }
 
     function filterList(query) {
@@ -620,6 +772,11 @@
         document.getElementById('item-title').value = currentItem.title;
         document.getElementById('item-type').value = currentTab === 'incidents' ? 'incident' : 'instruction';
         document.getElementById('item-id').value = currentItem.id;
+
+        updateCategoryOptions();
+        if (currentItem.category_id) {
+            document.getElementById('item-category').value = currentItem.category_id;
+        }
 
         renderPagesTabs();
         renderPageEditor();
@@ -824,10 +981,15 @@
         saveCurrentPage();
         currentItem.title = document.getElementById('item-title').value;
 
+        const categorySelect = document.getElementById('item-category');
+        const categoryId = categorySelect.value ? parseInt(categorySelect.value) : null;
+        currentItem.category_id = categoryId;
+
         // Prepare data for API
         const itemData = {
             title: currentItem.title,
             item_type: currentTab === 'incidents' ? 'incident' : 'instruction',
+            category_id: categoryId,
             pages: currentItem.pages.map(page => ({
                 title: page.title,
                 time: page.time,
@@ -857,6 +1019,7 @@
             const serverItem = {
                 id: savedItem.id,
                 title: savedItem.title,
+                category_id: savedItem.category_id,
                 pages: savedItem.pages.map(p => ({
                     title: p.title,
                     time: p.time,

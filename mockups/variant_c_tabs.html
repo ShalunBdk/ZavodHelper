@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Вариант В - Вкладки</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: #fff;
+            min-height: 100vh;
+            font-size: 18px;
+        }
+        .header {
+            background: #16213e;
+            padding: 16px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 16px;
+        }
+
+        .search-box {
+            position: relative;
+            max-width: 700px;
+            margin: 0 auto 16px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 18px 20px 18px 54px;
+            font-size: 20px;
+            border: 2px solid #3d5a80;
+            border-radius: 12px;
+            background: #0f0f23;
+            color: #fff;
+            outline: none;
+        }
+        .search-input:focus {
+            border-color: #4dabf7;
+        }
+        .search-input::placeholder {
+            color: #6c757d;
+        }
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 22px;
+            color: #6c757d;
+        }
+
+        .tabs-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            padding: 4px 0 16px;
+            max-width: 700px;
+            margin: 0 auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .tabs-container::-webkit-scrollbar { display: none; }
+
+        .tab-btn {
+            flex-shrink: 0;
+            padding: 16px 24px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 60px;
+        }
+        .tab-btn .icon { font-size: 22px; }
+
+        .tab-btn { background: #2d3748; color: #a0aec0; }
+        .tab-btn.active.red { background: #e74c3c; color: white; }
+        .tab-btn.active.orange { background: #e67e22; color: white; }
+        .tab-btn.active.blue { background: #3498db; color: white; }
+        .tab-btn.active.green { background: #27ae60; color: white; }
+        .tab-btn.active.purple { background: #9b59b6; color: white; }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .incident-btn {
+            display: block;
+            width: 100%;
+            padding: 24px;
+            margin-bottom: 12px;
+            font-size: 22px;
+            background: #2d3748;
+            color: white;
+            border: 3px solid #4a5568;
+            border-radius: 14px;
+            text-align: left;
+            cursor: pointer;
+            min-height: 75px;
+        }
+        .incident-btn:active { background: #4a5568; border-color: #68d391; }
+
+        .note {
+            text-align: center;
+            padding: 24px;
+            background: #2d3748;
+            border-radius: 12px;
+            margin-top: 24px;
+            font-size: 16px;
+            color: #a0aec0;
+            line-height: 1.5;
+        }
+
+        .scroll-hint {
+            text-align: center;
+            font-size: 14px;
+            color: #6c757d;
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ИНЦИДЕНТЫ</h1>
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" placeholder="Поиск инцидента...">
+        </div>
+        <div class="tabs-container">
+            <button class="tab-btn active red" onclick="showTab('rozliv', this, 'red')">
+                <span class="icon">🍶</span> Розлив
+            </button>
+            <button class="tab-btn orange" onclick="showTab('twisty', this, 'orange')">
+                <span class="icon">🔧</span> Твисты
+            </button>
+            <button class="tab-btn blue" onclick="showTab('etiket', this, 'blue')">
+                <span class="icon">🏷️</span> Этикетировщик
+            </button>
+            <button class="tab-btn green" onclick="showTab('izgot', this, 'green')">
+                <span class="icon">⚙️</span> Изготовление
+            </button>
+            <button class="tab-btn purple" onclick="showTab('upakovka', this, 'purple')">
+                <span class="icon">📦</span> Упаковка
+            </button>
+        </div>
+        <div class="scroll-hint">← Пролистайте для просмотра всех разделов →</div>
+    </div>
+
+    <div class="container">
+        <div id="rozliv" class="tab-content active">
+            <button class="incident-btn">Потекла рубашка</button>
+            <button class="incident-btn">Сбой дозатора</button>
+            <button class="incident-btn">Засор фильтра</button>
+            <button class="incident-btn">Ошибка датчика уровня</button>
+        </div>
+
+        <div id="twisty" class="tab-content">
+            <button class="incident-btn">Застряла крышка</button>
+            <button class="incident-btn">Сбой закрутки</button>
+            <button class="incident-btn">Проскальзывание захвата</button>
+        </div>
+
+        <div id="etiket" class="tab-content">
+            <button class="incident-btn">Застряла этикетка</button>
+            <button class="incident-btn">Смещение этикетки</button>
+            <button class="incident-btn">Закончилась лента</button>
+            <button class="incident-btn">Ошибка датчика</button>
+            <button class="incident-btn">Перекос рулона</button>
+        </div>
+
+        <div id="izgot" class="tab-content">
+            <button class="incident-btn">Сбой конвейера</button>
+            <button class="incident-btn">Перегрев двигателя</button>
+            <button class="incident-btn">Вибрация подшипников</button>
+            <button class="incident-btn">Утечка масла</button>
+            <button class="incident-btn">Обрыв ремня</button>
+            <button class="incident-btn">Сбой ПЛК</button>
+        </div>
+
+        <div id="upakovka" class="tab-content">
+            <button class="incident-btn">Замятие плёнки</button>
+            <button class="incident-btn">Сбой паллетайзера</button>
+        </div>
+
+        <div class="note">
+            <b>Вариант В: Вкладки</b><br>
+            Вкладки сверху с горизонтальной прокруткой.<br>
+            Быстрое переключение между блоками одним касанием.
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabId, btn, color) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('active', 'red', 'orange', 'blue', 'green', 'purple');
+            });
+
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active', color);
+        }
+    </script>
+</body>
+</html>

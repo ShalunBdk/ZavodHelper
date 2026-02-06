@@ -7,14 +7,92 @@ from app.database import get_db
 from app.models.models import ItemType
 from app.schemas import (
     ItemCreate, ItemUpdate, ItemResponse, ItemListResponse,
-    ImportData
+    ImportData, CategoryCreate, CategoryUpdate, CategoryResponse
 )
 from app.crud import (
     get_items, get_item, create_item, update_item, delete_item,
-    search_items, get_items_by_type, bulk_import_items, export_all_items
+    search_items, get_items_by_type, bulk_import_items, export_all_items,
+    get_categories, get_category, create_category, update_category, delete_category,
+    get_category_items_count
 )
 
 router = APIRouter(prefix="/api", tags=["API"])
+
+
+# Category endpoints
+@router.get("/categories", response_model=list[CategoryResponse])
+def list_categories(
+    item_type: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """Get all categories."""
+    type_filter = None
+    if item_type:
+        try:
+            type_filter = ItemType(item_type)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid item type")
+
+    categories = get_categories(db, item_type=type_filter)
+    return [
+        CategoryResponse(
+            id=cat.id,
+            name=cat.name,
+            item_type=cat.item_type,
+            icon=cat.icon,
+            color=cat.color,
+            order=cat.order,
+            items_count=get_category_items_count(db, cat.id),
+            created_at=cat.created_at
+        )
+        for cat in categories
+    ]
+
+
+@router.post("/categories", response_model=CategoryResponse, status_code=201)
+def create_new_category(category: CategoryCreate, db: Session = Depends(get_db)):
+    """Create a new category."""
+    cat = create_category(db, category)
+    return CategoryResponse(
+        id=cat.id,
+        name=cat.name,
+        item_type=cat.item_type,
+        icon=cat.icon,
+        color=cat.color,
+        order=cat.order,
+        items_count=0,
+        created_at=cat.created_at
+    )
+
+
+@router.put("/categories/{category_id}", response_model=CategoryResponse)
+def update_existing_category(
+    category_id: int,
+    category: CategoryUpdate,
+    db: Session = Depends(get_db)
+):
+    """Update an existing category."""
+    cat = update_category(db, category_id, category)
+    if not cat:
+        raise HTTPException(status_code=404, detail="Category not found")
+    return CategoryResponse(
+        id=cat.id,
+        name=cat.name,
+        item_type=cat.item_type,
+        icon=cat.icon,
+        color=cat.color,
+        order=cat.order,
+        items_count=get_category_items_count(db, cat.id),
+        created_at=cat.created_at
+    )
+
+
+@router.delete("/categories/{category_id}")
+def delete_existing_category(category_id: int, db: Session = Depends(get_db)):
+    """Delete a category."""
+    if not delete_category(db, category_id):
+        raise HTTPException(status_code=404, detail="Category not found")
+    return {"status": "deleted", "id": category_id}
 
 
 @router.get("/items", response_model=list[ItemListResponse])
@@ -22,6 +100,7 @@ def list_items(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     item_type: Optional[str] = None,
+    category_id: Optional[int] = None,
     db: Session = Depends(get_db)
 ):
     """Get all items with pagination."""
@@ -32,12 +111,14 @@ def list_items(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid item type")
 
-    items = get_items(db, skip=skip, limit=limit, item_type=type_filter)
+    items = get_items(db, skip=skip, limit=limit, item_type=type_filter, category_id=category_id)
     return [
         ItemListResponse(
             id=item.id,
             title=item.title,
             item_type=item.item_type,
+            category_id=item.category_id,
+            category=item.category,
             pages_count=len(item.pages),
             created_at=item.created_at,
             updated_at=item.updated_at
@@ -50,6 +131,7 @@ def list_items(
 def search(
     q: str = Query(..., min_length=1),
     item_type: Optional[str] = None,
+    category_id: Optional[int] = None,
     db: Session = Depends(get_db)
 ):
     """Search items by title."""
@@ -60,12 +142,19 @@ def search(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid item type")
 
-    items = search_items(db, q, type_filter)
+    items = search_items(db, q, type_filter, category_id)
     return [
         {
             "id": item.id,
             "title": item.title,
             "item_type": item.item_type,
+            "category_id": item.category_id,
+            "category": {
+                "id": item.category.id,
+                "name": item.category.name,
+                "icon": item.category.icon,
+                "color": item.category.color
+            } if item.category else None,
             "pages_count": len(item.pages)
         }
         for item in items
@@ -110,13 +199,23 @@ def delete_existing_item(item_id: int, db: Session = Depends(get_db)):
 
 # Data type specific endpoints
 @router.get("/incidents")
-def get_incidents(db: Session = Depends(get_db)):
+def get_incidents(
+    category_id: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
     """Get all incidents with full data."""
-    items = get_items_by_type(db, ItemType.INCIDENT)
+    items = get_items_by_type(db, ItemType.INCIDENT, category_id)
     return [
         {
             "id": item.id,
             "title": item.title,
+            "category_id": item.category_id,
+            "category": {
+                "id": item.category.id,
+                "name": item.category.name,
+                "icon": item.category.icon,
+                "color": item.category.color
+            } if item.category else None,
             "pages": [
                 {
                     "title": page.title,
@@ -132,13 +231,23 @@ def get_incidents(db: Session = Depends(get_db)):
 
 
 @router.get("/instructions")
-def get_instructions(db: Session = Depends(get_db)):
+def get_instructions(
+    category_id: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
     """Get all instructions with full data."""
-    items = get_items_by_type(db, ItemType.INSTRUCTION)
+    items = get_items_by_type(db, ItemType.INSTRUCTION, category_id)
     return [
         {
             "id": item.id,
             "title": item.title,
+            "category_id": item.category_id,
+            "category": {
+                "id": item.category.id,
+                "name": item.category.name,
+                "icon": item.category.icon,
+                "color": item.category.color
+            } if item.category else None,
             "pages": [
                 {
                     "title": page.title,

@@ -6,6 +6,35 @@ from pydantic import BaseModel, Field
 from app.models.models import ItemType
 
 
+# Category schemas
+class CategoryBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    item_type: ItemType
+    icon: str = Field(default="📁", max_length=50)
+    color: str = Field(default="#3498db", max_length=20)
+    order: int = 0
+
+
+class CategoryCreate(CategoryBase):
+    pass
+
+
+class CategoryUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    icon: Optional[str] = Field(None, max_length=50)
+    color: Optional[str] = Field(None, max_length=20)
+    order: Optional[int] = None
+
+
+class CategoryResponse(CategoryBase):
+    id: int
+    items_count: int = 0
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 # Action schemas
 class ActionBase(BaseModel):
     text: str = Field(..., min_length=1, max_length=1000)
@@ -52,6 +81,7 @@ class PageResponse(PageBase):
 class ItemBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     item_type: ItemType
+    category_id: Optional[int] = None
 
 
 class ItemCreate(ItemBase):
@@ -61,12 +91,24 @@ class ItemCreate(ItemBase):
 class ItemUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     item_type: Optional[ItemType] = None
+    category_id: Optional[int] = None
     pages: Optional[list[PageCreate]] = None
+
+
+class CategoryInfo(BaseModel):
+    id: int
+    name: str
+    icon: str
+    color: str
+
+    class Config:
+        from_attributes = True
 
 
 class ItemResponse(ItemBase):
     id: int
     pages: list[PageResponse] = []
+    category: Optional[CategoryInfo] = None
     created_at: datetime
     updated_at: datetime
 
@@ -78,6 +120,8 @@ class ItemListResponse(BaseModel):
     id: int
     title: str
     item_type: ItemType
+    category_id: Optional[int] = None
+    category: Optional[CategoryInfo] = None
     pages_count: int
     created_at: datetime
     updated_at: datetime

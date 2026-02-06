@@ -1,41 +1,110 @@
 """CRUD operations for the knowledge base."""
 from typing import Optional
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 
-from app.models.models import Item, Page, Action, ItemType
-from app.schemas import ItemCreate, ItemUpdate, ImportData
+from app.models.models import Item, Page, Action, ItemType, Category
+from app.schemas import ItemCreate, ItemUpdate, ImportData, CategoryCreate, CategoryUpdate
+
+
+# Category CRUD
+def get_categories(
+    db: Session,
+    item_type: Optional[ItemType] = None
+) -> list[Category]:
+    """Get all categories with item counts."""
+    query = db.query(Category)
+    if item_type:
+        query = query.filter(Category.item_type == item_type)
+    return query.order_by(Category.order, Category.name).all()
+
+
+def get_category(db: Session, category_id: int) -> Optional[Category]:
+    """Get a single category by ID."""
+    return db.query(Category).filter(Category.id == category_id).first()
+
+
+def create_category(db: Session, category_data: CategoryCreate) -> Category:
+    """Create a new category."""
+    db_category = Category(**category_data.model_dump())
+    db.add(db_category)
+    db.commit()
+    db.refresh(db_category)
+    return db_category
+
+
+def update_category(db: Session, category_id: int, category_data: CategoryUpdate) -> Optional[Category]:
+    """Update a category."""
+    db_category = db.query(Category).filter(Category.id == category_id).first()
+    if not db_category:
+        return None
+
+    update_data = category_data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_category, field, value)
+
+    db.commit()
+    db.refresh(db_category)
+    return db_category
+
+
+def delete_category(db: Session, category_id: int) -> bool:
+    """Delete a category."""
+    db_category = db.query(Category).filter(Category.id == category_id).first()
+    if not db_category:
+        return False
+    db.delete(db_category)
+    db.commit()
+    return True
+
+
+def get_category_items_count(db: Session, category_id: int) -> int:
+    """Get count of items in a category."""
+    return db.query(func.count(Item.id)).filter(Item.category_id == category_id).scalar()
+
+
+# Item CRUD
 
 
 def get_items(
     db: Session,
     skip: int = 0,
     limit: int = 100,
-    item_type: Optional[ItemType] = None
+    item_type: Optional[ItemType] = None,
+    category_id: Optional[int] = None
 ) -> list[Item]:
     """Get all items with optional filtering."""
-    query = db.query(Item)
+    query = db.query(Item).options(joinedload(Item.category))
     if item_type:
         query = query.filter(Item.item_type == item_type)
+    if category_id is not None:
+        query = query.filter(Item.category_id == category_id)
     return query.order_by(Item.updated_at.desc()).offset(skip).limit(limit).all()
 
 
-def get_items_by_type(db: Session, item_type: ItemType) -> list[Item]:
+def get_items_by_type(db: Session, item_type: ItemType, category_id: Optional[int] = None) -> list[Item]:
     """Get all items of a specific type with full data."""
-    return (
+    query = (
         db.query(Item)
-        .options(joinedload(Item.pages).joinedload(Page.actions))
+        .options(
+            joinedload(Item.pages).joinedload(Page.actions),
+            joinedload(Item.category)
+        )
         .filter(Item.item_type == item_type)
-        .order_by(Item.id)
-        .all()
     )
+    if category_id is not None:
+        query = query.filter(Item.category_id == category_id)
+    return query.order_by(Item.id).all()
 
 
 def get_item(db: Session, item_id: int) -> Optional[Item]:
     """Get a single item by ID with all related data."""
     return (
         db.query(Item)
-        .options(joinedload(Item.pages).joinedload(Page.actions))
+        .options(
+            joinedload(Item.pages).joinedload(Page.actions),
+            joinedload(Item.category)
+        )
         .filter(Item.id == item_id)
         .first()
     )
@@ -44,13 +113,16 @@ def get_item(db: Session, item_id: int) -> Optional[Item]:
 def search_items(
     db: Session,
     query: str,
-    item_type: Optional[ItemType] = None
+    item_type: Optional[ItemType] = None,
+    category_id: Optional[int] = None
 ) -> list[Item]:
     """Search items by title."""
     search = f"%{query}%"
-    q = db.query(Item).filter(Item.title.ilike(search))
+    q = db.query(Item).options(joinedload(Item.category)).filter(Item.title.ilike(search))
     if item_type:
         q = q.filter(Item.item_type == item_type)
+    if category_id is not None:
+        q = q.filter(Item.category_id == category_id)
     return q.order_by(Item.title).all()
 
 
@@ -59,7 +131,8 @@ def create_item(db: Session, item_data: ItemCreate) -> Item:
     # Create main item
     db_item = Item(
         title=item_data.title,
-        item_type=item_data.item_type
+        item_type=item_data.item_type,
+        category_id=item_data.category_id
     )
     db.add(db_item)
     db.flush()  # Get the ID
@@ -107,6 +180,8 @@ def update_item(db: Session, item_id: int, item_data: ItemUpdate) -> Optional[It
         db_item.title = item_data.title
     if item_data.item_type is not None:
         db_item.item_type = item_data.item_type
+    if 'category_id' in item_data.model_fields_set:
+        db_item.category_id = item_data.category_id
 
     # Update pages if provided
     if item_data.pages is not None:
@@ -158,6 +233,7 @@ def export_all_items(db: Session) -> dict:
         return {
             "id": item.id,
             "title": item.title,
+            "category_id": item.category_id,
             "pages": [
                 {
                     "title": page.title,

@@ -24,193 +24,223 @@
     }
 
     .container {
-        max-width: 1200px;
+        max-width: 800px;
         margin: 0 auto;
-        padding: 20px;
+        padding: 16px;
         min-height: 100vh;
     }
 
+    /* Header */
     .header {
+        padding: 0 0 20px 0;
+    }
+
+    .header-top {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 30px;
-        flex-wrap: wrap;
-        gap: 15px;
+        margin-bottom: 16px;
     }
 
     h1 {
-        font-size: 1.8rem;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        font-size: 1.6rem;
+        margin: 0;
     }
 
     .fullscreen-btn {
         background: rgba(255, 255, 255, 0.2);
-        border: 2px solid rgba(255, 255, 255, 0.3);
+        border: none;
         color: white;
-        padding: 16px 24px;
-        border-radius: 12px;
+        padding: 12px 20px;
+        border-radius: 10px;
         cursor: pointer;
-        font-size: 1.2rem;
-        font-weight: 600;
-        transition: all 0.3s;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        min-height: 56px;
-    }
-
-    .fullscreen-btn:hover, .fullscreen-btn:active {
-        background: rgba(255, 255, 255, 0.3);
-        transform: scale(1.02);
+        font-size: 1rem;
+        min-height: 48px;
     }
 
     .fullscreen-btn.active {
         background: rgba(56, 142, 60, 0.6);
-        border-color: var(--color-success);
     }
 
-    /* Main buttons - large touch targets */
+    /* Search box */
+    .search-box {
+        position: relative;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 18px 20px 18px 54px;
+        font-size: 1.1rem;
+        border: 2px solid #3d5a80;
+        border-radius: 12px;
+        background: #0f0f23;
+        color: #fff;
+        outline: none;
+        box-sizing: border-box;
+    }
+
+    .search-input:focus {
+        border-color: #4dabf7;
+    }
+
+    .search-input::placeholder {
+        color: #6c757d;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.3rem;
+        color: #6c757d;
+    }
+
+    /* Main buttons */
     .main-buttons {
         display: flex;
-        gap: 20px;
-        justify-content: center;
-        flex-wrap: wrap;
-        margin-bottom: 30px;
+        gap: 16px;
+        margin-bottom: 24px;
     }
 
     .main-btn {
-        padding: 32px 48px;
-        font-size: 1.6rem;
+        flex: 1;
+        padding: 28px 20px;
+        font-size: 1.4rem;
         font-weight: bold;
         border: none;
-        border-radius: 20px;
+        border-radius: 16px;
         cursor: pointer;
-        transition: all 0.3s ease;
-        min-width: 280px;
-        min-height: 100px;
+        transition: all 0.3s;
+        min-height: 90px;
         text-transform: uppercase;
-        letter-spacing: 2px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
+        letter-spacing: 1px;
     }
 
     .main-btn.incidents {
         background: linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-dark) 100%);
         color: white;
-        box-shadow: 0 8px 25px rgba(211, 47, 47, 0.5);
-    }
-
-    .main-btn.incidents:hover, .main-btn.incidents.active {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 35px rgba(211, 47, 47, 0.7);
     }
 
     .main-btn.instructions {
         background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
         color: white;
-        box-shadow: 0 8px 25px rgba(25, 118, 210, 0.5);
     }
 
-    .main-btn.instructions:hover, .main-btn.instructions.active {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 35px rgba(25, 118, 210, 0.7);
+    .main-btn.active {
+        transform: scale(0.98);
+        box-shadow: inset 0 4px 10px rgba(0,0,0,0.3);
     }
 
-    /* List panel */
-    .list-panel {
-        display: none;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
-        padding: 25px;
-        margin-bottom: 20px;
-        animation: slideDown 0.3s ease;
+    /* Back button */
+    .back-nav {
+        margin-bottom: 16px;
     }
 
-    .list-panel.show {
-        display: block;
-    }
-
-    @keyframes slideDown {
-        from { opacity: 0; transform: translateY(-20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .search-box {
-        width: 100%;
-        padding: 20px 28px;
-        font-size: 1.3rem;
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #4a5568;
+        color: white;
         border: none;
+        padding: 16px 28px;
+        font-size: 1.1rem;
+        border-radius: 12px;
+        cursor: pointer;
+        min-height: 56px;
+    }
+
+    .back-btn:active { background: #2d3748; }
+
+    /* Section title */
+    .section-title {
+        font-size: 1.3rem;
+        color: #a0aec0;
+        margin-bottom: 16px;
+        padding-left: 8px;
+    }
+
+    /* Category buttons */
+    .category-btn {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        width: 100%;
+        padding: 24px;
+        margin-bottom: 12px;
+        font-size: 1.3rem;
+        font-weight: bold;
+        border: none;
+        border-radius: 14px;
+        cursor: pointer;
+        text-align: left;
+        min-height: 75px;
+        color: white;
+        transition: transform 0.2s, opacity 0.2s;
+    }
+
+    .category-btn:active {
+        transform: scale(0.98);
+        opacity: 0.9;
+    }
+
+    .category-btn .icon { font-size: 1.8rem; }
+
+    .category-btn .count {
+        margin-left: auto;
+        background: rgba(0,0,0,0.2);
+        padding: 6px 14px;
         border-radius: 16px;
-        background: rgba(255, 255, 255, 0.95);
-        color: #333;
-        margin-bottom: 20px;
-        min-height: 64px;
-    }
-
-    .search-box::placeholder {
-        color: #666;
-    }
-
-    .search-box:focus {
-        outline: none;
-        box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.5);
+        font-size: 1rem;
     }
 
     /* Item buttons */
-    .items-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 16px;
-    }
-
     .item-btn {
-        padding: 24px 28px;
-        font-size: 1.25rem;
-        font-weight: 500;
-        border: none;
-        border-radius: 16px;
-        cursor: pointer;
-        transition: all 0.3s ease;
+        display: block;
+        width: 100%;
+        padding: 22px 24px;
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+        background: #2d3748;
+        color: white;
+        border: 3px solid #4a5568;
+        border-radius: 12px;
         text-align: left;
-        background: rgba(255, 255, 255, 0.15);
-        color: #fff;
-        min-height: 80px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+        cursor: pointer;
+        min-height: 70px;
+        transition: all 0.2s;
     }
 
-    .item-btn:hover, .item-btn:active {
-        background: rgba(255, 255, 255, 0.25);
-        transform: scale(1.02);
-    }
-
-    .item-btn.incident-item {
-        border-left: 6px solid var(--color-danger);
-    }
-
-    .item-btn.instruction-item {
-        border-left: 6px solid var(--color-primary);
+    .item-btn:active {
+        background: #4a5568;
+        border-color: #68d391;
     }
 
     .item-pages-count {
         display: block;
-        font-size: 1rem;
-        color: rgba(255,255,255,0.7);
-        margin-top: 8px;
+        font-size: 0.95rem;
+        color: rgba(255,255,255,0.6);
+        margin-top: 6px;
     }
 
     .no-results {
         text-align: center;
         padding: 40px;
-        color: rgba(255,255,255,0.6);
-        font-size: 1.3rem;
-        grid-column: 1 / -1;
+        color: rgba(255,255,255,0.5);
+        font-size: 1.2rem;
     }
+
+    /* Search results */
+    .search-result-category {
+        font-size: 0.9rem;
+        color: rgba(255,255,255,0.5);
+        margin-top: 4px;
+    }
+
+    /* Screens */
+    .screen { display: none; }
+    .screen.active { display: block; }
 
     /* ========== FULLSCREEN MODAL ========== */
     .modal-overlay {
@@ -234,7 +264,6 @@
         background: #fff;
     }
 
-    /* Header - fixed */
     .modal-header {
         background: linear-gradient(135deg, var(--color-warning) 0%, var(--color-warning-dark) 100%);
         color: white;
@@ -252,7 +281,7 @@
         flex: 1;
     }
 
-    .back-btn {
+    .modal-close-btn {
         background: rgba(255, 255, 255, 0.25);
         border: none;
         color: white;
@@ -262,15 +291,8 @@
         font-size: 1.1rem;
         font-weight: 600;
         min-height: 52px;
-        min-width: 120px;
-        transition: background 0.3s;
     }
 
-    .back-btn:hover, .back-btn:active {
-        background: rgba(255, 255, 255, 0.4);
-    }
-
-    /* Progress bar */
     .progress-container {
         background: #e0e0e0;
         height: 8px;
@@ -283,7 +305,6 @@
         transition: width 0.3s ease;
     }
 
-    /* Main content area */
     .modal-main {
         flex: 1;
         display: flex;
@@ -291,7 +312,6 @@
         background: #f5f5f5;
     }
 
-    /* Image side */
     .modal-image-side {
         flex: 0 0 40%;
         max-width: 40%;
@@ -315,7 +335,6 @@
         text-align: center;
     }
 
-    /* Content side */
     .modal-content-side {
         flex: 1;
         display: flex;
@@ -323,7 +342,6 @@
         overflow: hidden;
     }
 
-    /* Page info */
     .page-info {
         padding: 16px 24px;
         background: #fff;
@@ -348,7 +366,6 @@
         font-weight: 500;
     }
 
-    /* Actions list with checkboxes */
     .actions-container {
         flex: 1;
         overflow-y: auto;
@@ -427,7 +444,6 @@
         color: var(--color-success-dark);
     }
 
-    /* Navigation - fixed bottom */
     .modal-navigation {
         display: flex;
         justify-content: space-between;
@@ -451,11 +467,6 @@
         min-height: 60px;
         min-width: 140px;
         transition: all 0.3s;
-    }
-
-    .nav-btn:hover:not(:disabled), .nav-btn:active:not(:disabled) {
-        transform: scale(1.02);
-        box-shadow: 0 4px 15px rgba(25, 118, 210, 0.4);
     }
 
     .nav-btn:disabled {
@@ -509,7 +520,6 @@
         text-align: center;
     }
 
-    /* Responsive - Tablet portrait */
     @media (max-width: 900px) {
         .modal-main {
             flex-direction: column;
@@ -520,39 +530,23 @@
             max-width: 100%;
             max-height: 35%;
         }
-
-        .modal-content-side {
-            flex: 1;
-        }
-
-        .action-item {
-            padding: 14px 16px;
-        }
     }
 
     @media (max-width: 600px) {
         .main-btn {
-            width: 100%;
-            min-width: unset;
+            padding: 22px 16px;
+            font-size: 1.1rem;
         }
 
-        h1 {
-            font-size: 1.4rem;
-        }
-
-        .modal-header h2 {
-            font-size: 1.2rem;
+        .modal-image-side {
+            flex: 0 0 30%;
+            max-height: 30%;
         }
 
         .nav-btn {
             padding: 14px 20px;
             min-width: 100px;
             font-size: 1rem;
-        }
-
-        .modal-image-side {
-            flex: 0 0 30%;
-            max-height: 30%;
         }
     }
 </style>
@@ -561,30 +555,55 @@
 {% block content %}
 <div class="container">
     <div class="header">
-        <h1>База знаний</h1>
-        <button class="fullscreen-btn" onclick="toggleFullscreen()" id="fullscreen-btn">
-            <span id="fullscreen-icon">⛶</span>
-            <span id="fullscreen-text">Полный экран</span>
-        </button>
+        <div class="header-top">
+            <h1 id="page-header-title">База знаний</h1>
+            <button class="fullscreen-btn" onclick="toggleFullscreen()" id="fullscreen-btn">
+                <span id="fullscreen-icon">⛶</span>
+            </button>
+        </div>
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="global-search" placeholder="Поиск..." oninput="handleSearch()">
+        </div>
     </div>
 
-    <div class="main-buttons">
-        <button class="main-btn incidents" onclick="togglePanel('incidents')">
-            Инциденты
-        </button>
-        <button class="main-btn instructions" onclick="togglePanel('instructions')">
-            Инструкции
-        </button>
+    <!-- Screen: Main (choose type) -->
+    <div id="screen-main" class="screen active">
+        <div class="main-buttons">
+            <button class="main-btn incidents" onclick="showScreen('incidents')">
+                Инциденты
+            </button>
+            <button class="main-btn instructions" onclick="showScreen('instructions')">
+                Инструкции
+            </button>
+        </div>
     </div>
 
-    <div id="incidents-panel" class="list-panel">
-        <input type="text" class="search-box" placeholder="Поиск инцидента..." oninput="filterItems('incidents')">
-        <div class="items-list" id="incidents-list"></div>
+    <!-- Screen: Categories list -->
+    <div id="screen-categories" class="screen">
+        <div class="back-nav">
+            <button class="back-btn" onclick="showScreen('main')">← Назад</button>
+        </div>
+        <div class="section-title" id="categories-title">Выберите раздел</div>
+        <div id="categories-list"></div>
     </div>
 
-    <div id="instructions-panel" class="list-panel">
-        <input type="text" class="search-box" placeholder="Поиск инструкции..." oninput="filterItems('instructions')">
-        <div class="items-list" id="instructions-list"></div>
+    <!-- Screen: Items in category -->
+    <div id="screen-items" class="screen">
+        <div class="back-nav">
+            <button class="back-btn" onclick="goBackFromItems()">← Назад</button>
+        </div>
+        <div class="section-title" id="items-title">Инциденты</div>
+        <div id="items-list"></div>
+    </div>
+
+    <!-- Screen: Search results -->
+    <div id="screen-search" class="screen">
+        <div class="back-nav">
+            <button class="back-btn" onclick="clearSearch()">← Очистить поиск</button>
+        </div>
+        <div class="section-title">Результаты поиска</div>
+        <div id="search-results"></div>
     </div>
 </div>
 
@@ -593,7 +612,7 @@
     <div class="modal" id="modal-content">
         <div class="modal-header">
             <h2 id="modal-title">Заголовок</h2>
-            <button class="back-btn" onclick="closeModal('modal')">✕ Закрыть</button>
+            <button class="modal-close-btn" onclick="closeModal('modal')">✕ Закрыть</button>
         </div>
 
         <div class="progress-container">
@@ -612,9 +631,7 @@
                     <span class="time-badge" id="modal-time">⏱ 5 минут</span>
                 </div>
 
-                <div class="actions-container" id="actions-container">
-                    <!-- Actions will be rendered here -->
-                </div>
+                <div class="actions-container" id="actions-container"></div>
             </div>
         </div>
 
@@ -634,14 +651,15 @@
 
 {% block extra_js %}
 <script>
-    // Data from server
-    let incidentsData = {{ incidents | tojson | safe }};
-    let instructionsData = {{ instructions | tojson | safe }};
-
-    let currentPanel = null;
+    // State
+    let currentScreen = 'main';
+    let currentType = null;  // 'incident' or 'instruction'
+    let currentCategoryId = null;
+    let categories = [];
+    let allItems = [];
     let currentItem = null;
     let currentPage = 0;
-    let checkedActions = []; // Array of arrays: checkedActions[pageIndex][actionIndex] = true/false
+    let checkedActions = [];
 
     // Swipe support
     let touchStartX = 0;
@@ -650,82 +668,232 @@
     let touchEndY = 0;
     let isSwiping = false;
 
-    function togglePanel(type) {
-        const incidentsPanel = document.getElementById('incidents-panel');
-        const instructionsPanel = document.getElementById('instructions-panel');
-        const incidentsBtn = document.querySelector('.main-btn.incidents');
-        const instructionsBtn = document.querySelector('.main-btn.instructions');
-
-        if (type === 'incidents') {
-            if (currentPanel === 'incidents') {
-                incidentsPanel.classList.remove('show');
-                incidentsBtn.classList.remove('active');
-                currentPanel = null;
-            } else {
-                incidentsPanel.classList.add('show');
-                instructionsPanel.classList.remove('show');
-                incidentsBtn.classList.add('active');
-                instructionsBtn.classList.remove('active');
-                currentPanel = 'incidents';
-                renderItems('incidents', incidentsData);
-            }
-        } else {
-            if (currentPanel === 'instructions') {
-                instructionsPanel.classList.remove('show');
-                instructionsBtn.classList.remove('active');
-                currentPanel = null;
-            } else {
-                instructionsPanel.classList.add('show');
-                incidentsPanel.classList.remove('show');
-                instructionsBtn.classList.add('active');
-                incidentsBtn.classList.remove('active');
-                currentPanel = 'instructions';
-                renderItems('instructions', instructionsData);
-            }
+    // Load initial data
+    async function loadData() {
+        try {
+            const [incidentCats, instructionCats, incidents, instructions] = await Promise.all([
+                api('/categories?item_type=incident'),
+                api('/categories?item_type=instruction'),
+                api('/incidents'),
+                api('/instructions')
+            ]);
+            categories = [...incidentCats, ...instructionCats];
+            allItems = [
+                ...incidents.map(i => ({...i, item_type: 'incident'})),
+                ...instructions.map(i => ({...i, item_type: 'instruction'}))
+            ];
+        } catch (error) {
+            console.error('Failed to load data:', error);
         }
     }
 
-    function renderItems(type, data) {
-        const list = document.getElementById(`${type}-list`);
-        const itemClass = type === 'incidents' ? 'incident-item' : 'instruction-item';
+    loadData();
 
-        if (data.length === 0) {
+    // Screen navigation
+    function showScreen(screen, options = {}) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+
+        // Clear search and reset search context when navigating (except to search screen)
+        if (screen !== 'search') {
+            document.getElementById('global-search').value = '';
+            searchContext = { type: null, categoryId: null, previousScreen: 'main' };
+        }
+
+        if (screen === 'main') {
+            document.getElementById('screen-main').classList.add('active');
+            document.getElementById('page-header-title').textContent = 'База знаний';
+            document.getElementById('global-search').placeholder = 'Поиск...';
+            currentType = null;
+            currentCategoryId = null;
+        } else if (screen === 'incidents' || screen === 'instructions') {
+            currentType = screen === 'incidents' ? 'incident' : 'instruction';
+            currentCategoryId = null;
+            document.getElementById('screen-categories').classList.add('active');
+            document.getElementById('page-header-title').textContent = screen === 'incidents' ? 'Инциденты' : 'Инструкции';
+            document.getElementById('categories-title').textContent = 'Выберите раздел';
+            document.getElementById('global-search').placeholder = screen === 'incidents' ? 'Поиск инцидента...' : 'Поиск инструкции...';
+            renderCategories();
+        } else if (screen === 'items') {
+            document.getElementById('screen-items').classList.add('active');
+            currentCategoryId = options.categoryId;
+            const cat = categories.find(c => c.id === currentCategoryId);
+            document.getElementById('items-title').textContent = cat ? `${cat.icon} ${cat.name}` : 'Все';
+            document.getElementById('global-search').placeholder = currentCategoryId !== null ? 'Поиск в разделе...' : 'Поиск...';
+            renderItems();
+        } else if (screen === 'search') {
+            document.getElementById('screen-search').classList.add('active');
+        }
+
+        currentScreen = screen;
+    }
+
+    function goBackFromItems() {
+        if (currentType) {
+            showScreen(currentType === 'incident' ? 'incidents' : 'instructions');
+        } else {
+            showScreen('main');
+        }
+    }
+
+    // Render categories
+    function renderCategories() {
+        const list = document.getElementById('categories-list');
+        const typeCats = categories.filter(c => c.item_type === currentType);
+
+        if (typeCats.length === 0) {
+            // No categories, show all items directly
+            showScreen('items', { categoryId: null });
+            return;
+        }
+
+        // Add "All" category
+        let html = `
+            <button class="category-btn" style="background: #4a5568;" onclick="showScreen('items', {categoryId: null})">
+                <span class="icon">📋</span>
+                <span>Все</span>
+                <span class="count">${allItems.filter(i => i.item_type === currentType).length}</span>
+            </button>
+        `;
+
+        html += typeCats.map(cat => `
+            <button class="category-btn" style="background: ${cat.color};" onclick="showScreen('items', {categoryId: ${cat.id}})">
+                <span class="icon">${cat.icon}</span>
+                <span>${cat.name}</span>
+                <span class="count">${cat.items_count}</span>
+            </button>
+        `).join('');
+
+        list.innerHTML = html;
+    }
+
+    // Render items
+    function renderItems() {
+        const list = document.getElementById('items-list');
+        let items = allItems.filter(i => i.item_type === currentType);
+
+        if (currentCategoryId !== null) {
+            items = items.filter(i => i.category_id === currentCategoryId);
+        }
+
+        if (items.length === 0) {
             list.innerHTML = '<div class="no-results">Ничего не найдено</div>';
             return;
         }
 
-        list.innerHTML = data.map((item, index) => `
-            <button class="item-btn ${itemClass}" onclick="openModal(${index}, '${type}')">
+        list.innerHTML = items.map(item => `
+            <button class="item-btn" onclick="openItemModal(${item.id})">
                 ${item.title}
                 <span class="item-pages-count">${item.pages.length} этап(ов)</span>
             </button>
         `).join('');
     }
 
-    function filterItems(type) {
-        const searchBox = document.querySelector(`#${type}-panel .search-box`);
-        const query = searchBox.value.toLowerCase();
-        const data = type === 'incidents' ? incidentsData : instructionsData;
+    // Search context - saved before switching to search screen
+    let searchContext = {
+        type: null,
+        categoryId: null,
+        previousScreen: 'main'
+    };
 
-        const filtered = data.filter(item =>
-            item.title.toLowerCase().includes(query)
-        );
+    // Search
+    function handleSearch() {
+        const query = document.getElementById('global-search').value.trim().toLowerCase();
 
-        renderItems(type, filtered);
+        if (query.length === 0) {
+            clearSearch();
+            return;
+        }
+
+        if (query.length < 2) return;
+
+        // Save search context BEFORE changing screen
+        if (currentScreen !== 'search') {
+            searchContext = {
+                type: currentType,
+                categoryId: currentCategoryId,
+                previousScreen: currentScreen
+            };
+        }
+
+        let results = allItems.filter(item => item.title.toLowerCase().includes(query));
+
+        // Filter by type from saved context
+        if (searchContext.type) {
+            results = results.filter(i => i.item_type === searchContext.type);
+        }
+
+        // Filter by category from saved context
+        if (searchContext.categoryId !== null) {
+            results = results.filter(i => i.category_id === searchContext.categoryId);
+        }
+
+        renderSearchResults(results);
+
+        // Switch to search screen without resetting context
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('screen-search').classList.add('active');
+        currentScreen = 'search';
     }
 
-    function openModal(index, type) {
-        const data = type === 'incidents' ? incidentsData : instructionsData;
-        currentItem = data[index];
+    function renderSearchResults(results) {
+        const list = document.getElementById('search-results');
+
+        // Update search title to show context
+        let searchTitle = 'Результаты поиска';
+        if (searchContext.categoryId !== null) {
+            const cat = categories.find(c => c.id === searchContext.categoryId);
+            if (cat) searchTitle = `Поиск в "${cat.icon} ${cat.name}"`;
+        } else if (searchContext.type) {
+            searchTitle = searchContext.type === 'incident' ? 'Поиск в инцидентах' : 'Поиск в инструкциях';
+        }
+        document.querySelector('#screen-search .section-title').textContent = searchTitle;
+
+        if (results.length === 0) {
+            list.innerHTML = '<div class="no-results">Ничего не найдено</div>';
+            return;
+        }
+
+        list.innerHTML = results.map(item => {
+            const cat = categories.find(c => c.id === item.category_id);
+            const catName = cat ? `${cat.icon} ${cat.name}` : '';
+            const typeName = item.item_type === 'incident' ? 'Инцидент' : 'Инструкция';
+            return `
+                <button class="item-btn" onclick="openItemModal(${item.id})">
+                    ${item.title}
+                    <span class="item-pages-count">${item.pages.length} этап(ов)</span>
+                    <span class="search-result-category">${typeName} ${catName ? '• ' + catName : ''}</span>
+                </button>
+            `;
+        }).join('');
+    }
+
+    function clearSearch() {
+        document.getElementById('global-search').value = '';
+        // Go back to previous screen using saved context
+        if (searchContext.previousScreen === 'items' && searchContext.categoryId !== null) {
+            currentType = searchContext.type;
+            showScreen('items', { categoryId: searchContext.categoryId });
+        } else if (searchContext.previousScreen === 'categories' || searchContext.type) {
+            showScreen(searchContext.type === 'incident' ? 'incidents' : 'instructions');
+        } else {
+            showScreen('main');
+        }
+    }
+
+    // Modal functions
+    function openItemModal(itemId) {
+        const item = allItems.find(i => i.id === itemId);
+        if (!item) return;
+
+        currentItem = item;
         currentPage = 0;
 
-        // Initialize checkedActions array for all pages
         checkedActions = currentItem.pages.map(page =>
             new Array(page.actions.length).fill(false)
         );
 
         document.getElementById('modal-title').textContent = currentItem.title;
-        renderPage();
+        renderModalPage();
         renderPageDots();
         updateProgress();
 
@@ -733,13 +901,12 @@
         document.body.style.overflow = 'hidden';
     }
 
-    function renderPage() {
+    function renderModalPage() {
         const page = currentItem.pages[currentPage];
 
         document.getElementById('page-title').textContent = page.title;
         document.getElementById('modal-time').textContent = '⏱ ' + page.time;
 
-        // Image
         const img = document.getElementById('modal-img');
         const noImg = document.getElementById('no-image');
         if (page.image) {
@@ -751,7 +918,6 @@
             noImg.style.display = 'block';
         }
 
-        // Actions with checkboxes
         const pageChecks = checkedActions[currentPage];
         document.getElementById('actions-container').innerHTML = page.actions.map((action, index) => `
             <div class="action-item ${pageChecks[index] ? 'checked' : ''}" onclick="toggleAction(${index})">
@@ -761,7 +927,6 @@
             </div>
         `).join('');
 
-        // Navigation
         document.getElementById('page-number').textContent = `${currentPage + 1} / ${currentItem.pages.length}`;
         document.getElementById('prev-btn').disabled = currentPage === 0;
 
@@ -781,7 +946,7 @@
 
     function toggleAction(actionIndex) {
         checkedActions[currentPage][actionIndex] = !checkedActions[currentPage][actionIndex];
-        renderPage();
+        renderModalPage();
     }
 
     function updateProgress() {
@@ -804,7 +969,6 @@
     function isPageCompleted(pageIndex) {
         const pageChecks = checkedActions[pageIndex];
         if (!pageChecks || pageChecks.length === 0) return false;
-        // Page is completed only if all actions are checked
         return pageChecks.every(c => c);
     }
 
@@ -832,9 +996,8 @@
         const newPage = currentPage + direction;
         if (newPage >= 0 && newPage < currentItem.pages.length) {
             currentPage = newPage;
-            renderPage();
+            renderModalPage();
         } else if (newPage >= currentItem.pages.length) {
-            // Finished
             closeModal('modal');
             showToast('Выполнено!', 'success');
         }
@@ -842,7 +1005,7 @@
 
     function goToPage(pageIndex) {
         currentPage = pageIndex;
-        renderPage();
+        renderModalPage();
     }
 
     function closeModalOutside(event) {
@@ -851,9 +1014,8 @@
         }
     }
 
-    // Swipe support - only horizontal swipes, ignore vertical scrolling
+    // Swipe support
     document.getElementById('modal-content').addEventListener('touchstart', e => {
-        // Don't track swipes that start in the scrollable actions area
         if (e.target.closest('.actions-container')) {
             isSwiping = false;
             return;
@@ -877,7 +1039,6 @@
         const diffX = touchStartX - touchEndX;
         const diffY = touchStartY - touchEndY;
 
-        // Only handle horizontal swipes (X movement > Y movement)
         if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > swipeThreshold) {
             if (diffX > 0) {
                 changePage(1);
@@ -901,7 +1062,7 @@
         }
     });
 
-    // Fullscreen functionality
+    // Fullscreen
     function toggleFullscreen() {
         if (!document.fullscreenElement && !document.webkitFullscreenElement) {
             const elem = document.documentElement;
@@ -909,54 +1070,26 @@
                 elem.requestFullscreen();
             } else if (elem.webkitRequestFullscreen) {
                 elem.webkitRequestFullscreen();
-            } else if (elem.msRequestFullscreen) {
-                elem.msRequestFullscreen();
             }
         } else {
             if (document.exitFullscreen) {
                 document.exitFullscreen();
             } else if (document.webkitExitFullscreen) {
                 document.webkitExitFullscreen();
-            } else if (document.msExitFullscreen) {
-                document.msExitFullscreen();
             }
         }
     }
 
     function updateFullscreenButton() {
         const btn = document.getElementById('fullscreen-btn');
-        const icon = document.getElementById('fullscreen-icon');
-        const text = document.getElementById('fullscreen-text');
-
         if (document.fullscreenElement || document.webkitFullscreenElement) {
             btn.classList.add('active');
-            icon.textContent = '⛶';
-            text.textContent = 'Выйти';
         } else {
             btn.classList.remove('active');
-            icon.textContent = '⛶';
-            text.textContent = 'Полный экран';
         }
     }
 
     document.addEventListener('fullscreenchange', updateFullscreenButton);
     document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
-
-    // Refresh data from API
-    async function refreshData() {
-        try {
-            const [incidents, instructions] = await Promise.all([
-                api('/incidents'),
-                api('/instructions')
-            ]);
-            incidentsData = incidents;
-            instructionsData = instructions;
-            if (currentPanel) {
-                renderItems(currentPanel, currentPanel === 'incidents' ? incidentsData : instructionsData);
-            }
-        } catch (error) {
-            console.error('Failed to refresh data:', error);
-        }
-    }
 </script>
 {% endblock %}

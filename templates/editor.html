@@ -956,9 +956,8 @@
     }
 
     function addNewItem() {
-        const newId = Math.max(...data[currentTab].map(i => i.id), 0) + 1;
         const newItem = {
-            id: newId,
+            id: null,  // No ID = new item, will be created via POST
             title: currentTab === 'incidents' ? "Новый инцидент" : "Новая инструкция",
             pages: [
                 {

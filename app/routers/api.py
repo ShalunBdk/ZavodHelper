@@ -7,16 +7,52 @@ from app.database import get_db
 from app.models.models import ItemType
 from app.schemas import (
     ItemCreate, ItemUpdate, ItemResponse, ItemListResponse,
-    ImportData, CategoryCreate, CategoryUpdate, CategoryResponse
+    ImportData, CategoryCreate, CategoryUpdate, CategoryResponse,
+    LocationCreate, LocationUpdate, LocationResponse
 )
 from app.crud import (
     get_items, get_item, create_item, update_item, delete_item,
     search_items, get_items_by_type, bulk_import_items, export_all_items,
     get_categories, get_category, create_category, update_category, delete_category,
-    get_category_items_count
+    get_category_items_count,
+    get_locations, get_location, create_location, update_location, delete_location
 )
 
 router = APIRouter(prefix="/api", tags=["API"])
+
+
+# Location endpoints
+@router.get("/locations", response_model=list[LocationResponse])
+def list_locations(db: Session = Depends(get_db)):
+    """Get all locations."""
+    return get_locations(db)
+
+
+@router.post("/locations", response_model=LocationResponse, status_code=201)
+def create_new_location(location: LocationCreate, db: Session = Depends(get_db)):
+    """Create a new location."""
+    return create_location(db, location)
+
+
+@router.put("/locations/{location_id}", response_model=LocationResponse)
+def update_existing_location(
+    location_id: int,
+    location: LocationUpdate,
+    db: Session = Depends(get_db)
+):
+    """Update an existing location."""
+    loc = update_location(db, location_id, location)
+    if not loc:
+        raise HTTPException(status_code=404, detail="Location not found")
+    return loc
+
+
+@router.delete("/locations/{location_id}")
+def delete_existing_location(location_id: int, db: Session = Depends(get_db)):
+    """Delete a location."""
+    if not delete_location(db, location_id):
+        raise HTTPException(status_code=404, detail="Location not found")
+    return {"status": "deleted", "id": location_id}
 
 
 # Category endpoints
@@ -101,6 +137,7 @@ def list_items(
     limit: int = Query(100, ge=1, le=1000),
     item_type: Optional[str] = None,
     category_id: Optional[int] = None,
+    location_id: Optional[int] = None,
     db: Session = Depends(get_db)
 ):
     """Get all items with pagination."""
@@ -111,7 +148,7 @@ def list_items(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid item type")
 
-    items = get_items(db, skip=skip, limit=limit, item_type=type_filter, category_id=category_id)
+    items = get_items(db, skip=skip, limit=limit, item_type=type_filter, category_id=category_id, location_id=location_id)
     return [
         ItemListResponse(
             id=item.id,
@@ -119,6 +156,8 @@ def list_items(
             item_type=item.item_type,
             category_id=item.category_id,
             category=item.category,
+            location_ids=[loc.id for loc in item.locations],
+            locations=item.locations,
             pages_count=len(item.pages),
             created_at=item.created_at,
             updated_at=item.updated_at
@@ -132,6 +171,7 @@ def search(
     q: str = Query(..., min_length=1),
     item_type: Optional[str] = None,
     category_id: Optional[int] = None,
+    location_id: Optional[int] = None,
     db: Session = Depends(get_db)
 ):
     """Search items by title."""
@@ -142,7 +182,7 @@ def search(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid item type")
 
-    items = search_items(db, q, type_filter, category_id)
+    items = search_items(db, q, type_filter, category_id, location_id)
     return [
         {
             "id": item.id,
@@ -155,6 +195,7 @@ def search(
                 "icon": item.category.icon,
                 "color": item.category.color
             } if item.category else None,
+            "location_ids": [loc.id for loc in item.locations],
             "pages_count": len(item.pages)
         }
         for item in items
@@ -201,10 +242,11 @@ def delete_existing_item(item_id: int, db: Session = Depends(get_db)):
 @router.get("/incidents")
 def get_incidents(
     category_id: Optional[int] = None,
+    location_id: Optional[int] = None,
     db: Session = Depends(get_db)
 ):
     """Get all incidents with full data."""
-    items = get_items_by_type(db, ItemType.INCIDENT, category_id)
+    items = get_items_by_type(db, ItemType.INCIDENT, category_id, location_id)
     return [
         {
             "id": item.id,
@@ -216,6 +258,7 @@ def get_incidents(
                 "icon": item.category.icon,
                 "color": item.category.color
             } if item.category else None,
+            "location_ids": [loc.id for loc in item.locations],
             "pages": [
                 {
                     "title": page.title,
@@ -233,10 +276,11 @@ def get_incidents(
 @router.get("/instructions")
 def get_instructions(
     category_id: Optional[int] = None,
+    location_id: Optional[int] = None,
     db: Session = Depends(get_db)
 ):
     """Get all instructions with full data."""
-    items = get_items_by_type(db, ItemType.INSTRUCTION, category_id)
+    items = get_items_by_type(db, ItemType.INSTRUCTION, category_id, location_id)
     return [
         {
             "id": item.id,
@@ -248,6 +292,7 @@ def get_instructions(
                 "icon": item.category.icon,
                 "color": item.category.color
             } if item.category else None,
+            "location_ids": [loc.id for loc in item.locations],
             "pages": [
                 {
                     "title": page.title,

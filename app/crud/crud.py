@@ -3,8 +3,58 @@ from typing import Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, func
 
-from app.models.models import Item, Page, Action, ItemType, Category
-from app.schemas import ItemCreate, ItemUpdate, ImportData, CategoryCreate, CategoryUpdate
+from app.models.models import Item, Page, Action, ItemType, Category, Location
+from app.schemas import ItemCreate, ItemUpdate, ImportData, CategoryCreate, CategoryUpdate, LocationCreate, LocationUpdate
+
+
+# Location CRUD
+def get_locations(db: Session) -> list[Location]:
+    """Get all locations."""
+    return db.query(Location).order_by(Location.order, Location.name).all()
+
+
+def get_location(db: Session, location_id: int) -> Optional[Location]:
+    """Get a single location by ID."""
+    return db.query(Location).filter(Location.id == location_id).first()
+
+
+def get_location_by_code(db: Session, code: str) -> Optional[Location]:
+    """Get a location by code."""
+    return db.query(Location).filter(Location.code == code).first()
+
+
+def create_location(db: Session, location_data: LocationCreate) -> Location:
+    """Create a new location."""
+    db_location = Location(**location_data.model_dump())
+    db.add(db_location)
+    db.commit()
+    db.refresh(db_location)
+    return db_location
+
+
+def update_location(db: Session, location_id: int, location_data: LocationUpdate) -> Optional[Location]:
+    """Update a location."""
+    db_location = db.query(Location).filter(Location.id == location_id).first()
+    if not db_location:
+        return None
+
+    update_data = location_data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_location, field, value)
+
+    db.commit()
+    db.refresh(db_location)
+    return db_location
+
+
+def delete_location(db: Session, location_id: int) -> bool:
+    """Delete a location."""
+    db_location = db.query(Location).filter(Location.id == location_id).first()
+    if not db_location:
+        return False
+    db.delete(db_location)
+    db.commit()
+    return True
 
 
 # Category CRUD
@@ -71,29 +121,43 @@ def get_items(
     skip: int = 0,
     limit: int = 100,
     item_type: Optional[ItemType] = None,
-    category_id: Optional[int] = None
+    category_id: Optional[int] = None,
+    location_id: Optional[int] = None
 ) -> list[Item]:
     """Get all items with optional filtering."""
-    query = db.query(Item).options(joinedload(Item.category))
+    query = db.query(Item).options(
+        joinedload(Item.category),
+        joinedload(Item.locations)
+    )
     if item_type:
         query = query.filter(Item.item_type == item_type)
     if category_id is not None:
         query = query.filter(Item.category_id == category_id)
+    if location_id is not None:
+        query = query.filter(Item.locations.any(Location.id == location_id))
     return query.order_by(Item.updated_at.desc()).offset(skip).limit(limit).all()
 
 
-def get_items_by_type(db: Session, item_type: ItemType, category_id: Optional[int] = None) -> list[Item]:
+def get_items_by_type(
+    db: Session,
+    item_type: ItemType,
+    category_id: Optional[int] = None,
+    location_id: Optional[int] = None
+) -> list[Item]:
     """Get all items of a specific type with full data."""
     query = (
         db.query(Item)
         .options(
             joinedload(Item.pages).joinedload(Page.actions),
-            joinedload(Item.category)
+            joinedload(Item.category),
+            joinedload(Item.locations)
         )
         .filter(Item.item_type == item_type)
     )
     if category_id is not None:
         query = query.filter(Item.category_id == category_id)
+    if location_id is not None:
+        query = query.filter(Item.locations.any(Location.id == location_id))
     return query.order_by(Item.id).all()
 
 
@@ -103,7 +167,8 @@ def get_item(db: Session, item_id: int) -> Optional[Item]:
         db.query(Item)
         .options(
             joinedload(Item.pages).joinedload(Page.actions),
-            joinedload(Item.category)
+            joinedload(Item.category),
+            joinedload(Item.locations)
         )
         .filter(Item.id == item_id)
         .first()
@@ -114,15 +179,21 @@ def search_items(
     db: Session,
     query: str,
     item_type: Optional[ItemType] = None,
-    category_id: Optional[int] = None
+    category_id: Optional[int] = None,
+    location_id: Optional[int] = None
 ) -> list[Item]:
     """Search items by title."""
     search = f"%{query}%"
-    q = db.query(Item).options(joinedload(Item.category)).filter(Item.title.ilike(search))
+    q = db.query(Item).options(
+        joinedload(Item.category),
+        joinedload(Item.locations)
+    ).filter(Item.title.ilike(search))
     if item_type:
         q = q.filter(Item.item_type == item_type)
     if category_id is not None:
         q = q.filter(Item.category_id == category_id)
+    if location_id is not None:
+        q = q.filter(Item.locations.any(Location.id == location_id))
     return q.order_by(Item.title).all()
 
 
@@ -136,6 +207,11 @@ def create_item(db: Session, item_data: ItemCreate) -> Item:
     )
     db.add(db_item)
     db.flush()  # Get the ID
+
+    # Add locations if provided
+    if item_data.location_ids:
+        locations = db.query(Location).filter(Location.id.in_(item_data.location_ids)).all()
+        db_item.locations = locations
 
     # Create pages
     for page_order, page_data in enumerate(item_data.pages):
@@ -168,7 +244,10 @@ def update_item(db: Session, item_id: int, item_data: ItemUpdate) -> Optional[It
     # Load item with pages for proper cascade
     db_item = (
         db.query(Item)
-        .options(joinedload(Item.pages).joinedload(Page.actions))
+        .options(
+            joinedload(Item.pages).joinedload(Page.actions),
+            joinedload(Item.locations)
+        )
         .filter(Item.id == item_id)
         .first()
     )
@@ -182,6 +261,11 @@ def update_item(db: Session, item_id: int, item_data: ItemUpdate) -> Optional[It
         db_item.item_type = item_data.item_type
     if 'category_id' in item_data.model_fields_set:
         db_item.category_id = item_data.category_id
+
+    # Update locations if provided
+    if item_data.location_ids is not None:
+        locations = db.query(Location).filter(Location.id.in_(item_data.location_ids)).all()
+        db_item.locations = locations
 
     # Update pages if provided
     if item_data.pages is not None:
@@ -234,6 +318,7 @@ def export_all_items(db: Session) -> dict:
             "id": item.id,
             "title": item.title,
             "category_id": item.category_id,
+            "location_ids": [loc.id for loc in item.locations],
             "pages": [
                 {
                     "title": page.title,

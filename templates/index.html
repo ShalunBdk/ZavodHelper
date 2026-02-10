@@ -47,6 +47,34 @@
         margin: 0;
     }
 
+    .header-controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .location-selector {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 1rem;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .location-selector:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .location-selector .location-name {
+        font-weight: 600;
+    }
+
     .fullscreen-btn {
         background: rgba(255, 255, 255, 0.2);
         border: none;
@@ -60,6 +88,66 @@
 
     .fullscreen-btn.active {
         background: rgba(56, 142, 60, 0.6);
+    }
+
+    /* Location modal */
+    .location-modal {
+        background: #1a1a2e;
+        border-radius: 15px;
+        max-width: 400px;
+        width: 90%;
+        padding: 0;
+        animation: modalAppear 0.3s ease;
+        overflow: hidden;
+    }
+
+    .location-modal h3 {
+        padding: 20px;
+        margin: 0;
+        background: #2d3748;
+        color: white;
+    }
+
+    .location-list {
+        padding: 10px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .location-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 16px 20px;
+        margin-bottom: 8px;
+        font-size: 1.1rem;
+        background: #2d3748;
+        color: white;
+        border: 2px solid transparent;
+        border-radius: 10px;
+        cursor: pointer;
+        text-align: left;
+        transition: all 0.2s;
+    }
+
+    .location-item:hover {
+        background: #4a5568;
+    }
+
+    .location-item.active {
+        border-color: #68d391;
+        background: #2f855a;
+    }
+
+    .location-item .location-code {
+        font-weight: 700;
+        min-width: 80px;
+    }
+
+    .location-item .location-full-name {
+        color: rgba(255,255,255,0.7);
+        font-size: 0.95rem;
     }
 
     /* Search box */
@@ -557,9 +645,15 @@
     <div class="header">
         <div class="header-top">
             <h1 id="page-header-title">База знаний</h1>
-            <button class="fullscreen-btn" onclick="toggleFullscreen()" id="fullscreen-btn">
-                <span id="fullscreen-icon">⛶</span>
-            </button>
+            <div class="header-controls">
+                <button class="location-selector" onclick="showLocationModal()">
+                    <span>📍</span>
+                    <span class="location-name" id="current-location-name">Все локации</span>
+                </button>
+                <button class="fullscreen-btn" onclick="toggleFullscreen()" id="fullscreen-btn">
+                    <span id="fullscreen-icon">⛶</span>
+                </button>
+            </div>
         </div>
         <div class="search-box">
             <span class="search-icon">🔍</span>
@@ -604,6 +698,14 @@
         </div>
         <div class="section-title">Результаты поиска</div>
         <div id="search-results"></div>
+    </div>
+</div>
+
+<!-- Location Modal -->
+<div class="modal-overlay" id="location-modal" onclick="closeLocationModalOutside(event)">
+    <div class="location-modal">
+        <h3>Выберите локацию</h3>
+        <div class="location-list" id="location-list"></div>
     </div>
 </div>
 
@@ -655,7 +757,9 @@
     let currentScreen = 'main';
     let currentType = null;  // 'incident' or 'instruction'
     let currentCategoryId = null;
+    let currentLocationId = null;  // Current selected location
     let categories = [];
+    let locations = [];
     let allItems = [];
     let currentItem = null;
     let currentPage = 0;
@@ -671,20 +775,88 @@
     // Load initial data
     async function loadData() {
         try {
-            const [incidentCats, instructionCats, incidents, instructions] = await Promise.all([
+            // Load saved location from localStorage
+            const savedLocationId = localStorage.getItem('selectedLocationId');
+            if (savedLocationId && savedLocationId !== 'null') {
+                currentLocationId = parseInt(savedLocationId);
+            }
+
+            // Build location query param
+            const locParam = currentLocationId ? `?location_id=${currentLocationId}` : '';
+            const locParamAmp = currentLocationId ? `&location_id=${currentLocationId}` : '';
+
+            const [locs, incidentCats, instructionCats, incidents, instructions] = await Promise.all([
+                api('/locations'),
                 api('/categories?item_type=incident'),
                 api('/categories?item_type=instruction'),
-                api('/incidents'),
-                api('/instructions')
+                api('/incidents' + locParam),
+                api('/instructions' + locParam)
             ]);
+            locations = locs;
             categories = [...incidentCats, ...instructionCats];
             allItems = [
                 ...incidents.map(i => ({...i, item_type: 'incident'})),
                 ...instructions.map(i => ({...i, item_type: 'instruction'}))
             ];
+
+            // Update location display
+            updateLocationDisplay();
         } catch (error) {
             console.error('Failed to load data:', error);
         }
+    }
+
+    function updateLocationDisplay() {
+        const nameEl = document.getElementById('current-location-name');
+        if (currentLocationId) {
+            const loc = locations.find(l => l.id === currentLocationId);
+            nameEl.textContent = loc ? loc.code : 'Все локации';
+        } else {
+            nameEl.textContent = 'Все локации';
+        }
+    }
+
+    // Location modal
+    function showLocationModal() {
+        const list = document.getElementById('location-list');
+        let html = `
+            <button class="location-item ${!currentLocationId ? 'active' : ''}" onclick="selectLocation(null)">
+                <span class="location-code">📋 Все</span>
+                <span class="location-full-name">Показать все локации</span>
+            </button>
+        `;
+        html += locations.map(loc => `
+            <button class="location-item ${currentLocationId === loc.id ? 'active' : ''}" onclick="selectLocation(${loc.id})">
+                <span class="location-code">${loc.code}</span>
+                <span class="location-full-name">${loc.name}</span>
+            </button>
+        `).join('');
+        list.innerHTML = html;
+        document.getElementById('location-modal').classList.add('show');
+    }
+
+    function closeLocationModalOutside(event) {
+        if (event.target.classList.contains('modal-overlay')) {
+            document.getElementById('location-modal').classList.remove('show');
+        }
+    }
+
+    async function selectLocation(locationId) {
+        currentLocationId = locationId;
+        localStorage.setItem('selectedLocationId', locationId);
+        document.getElementById('location-modal').classList.remove('show');
+
+        // Reload data with new location filter
+        await loadData();
+
+        // Refresh current screen
+        if (currentScreen === 'categories') {
+            renderCategories();
+        } else if (currentScreen === 'items') {
+            renderItems();
+        }
+
+        showToast(locationId ? `Локация: ${locations.find(l => l.id === locationId)?.code}` : 'Все локации', 'success');
     }
 
     loadData();
@@ -739,6 +911,7 @@
     function renderCategories() {
         const list = document.getElementById('categories-list');
         const typeCats = categories.filter(c => c.item_type === currentType);
+        const typeItems = allItems.filter(i => i.item_type === currentType);
 
         if (typeCats.length === 0) {
             // No categories, show all items directly
@@ -751,17 +924,21 @@
             <button class="category-btn" style="background: #4a5568;" onclick="showScreen('items', {categoryId: null})">
                 <span class="icon">📋</span>
                 <span>Все</span>
-                <span class="count">${allItems.filter(i => i.item_type === currentType).length}</span>
+                <span class="count">${typeItems.length}</span>
             </button>
         `;
 
-        html += typeCats.map(cat => `
-            <button class="category-btn" style="background: ${cat.color};" onclick="showScreen('items', {categoryId: ${cat.id}})">
-                <span class="icon">${cat.icon}</span>
-                <span>${cat.name}</span>
-                <span class="count">${cat.items_count}</span>
-            </button>
-        `).join('');
+        // Calculate counts from loaded items (already filtered by location)
+        html += typeCats.map(cat => {
+            const catCount = typeItems.filter(i => i.category_id === cat.id).length;
+            return `
+                <button class="category-btn" style="background: ${cat.color};" onclick="showScreen('items', {categoryId: ${cat.id}})">
+                    <span class="icon">${cat.icon}</span>
+                    <span>${cat.name}</span>
+                    <span class="count">${catCount}</span>
+                </button>
+            `;
+        }).join('');
 
         list.innerHTML = html;
     }

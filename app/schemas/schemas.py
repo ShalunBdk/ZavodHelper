@@ -6,6 +6,40 @@ from pydantic import BaseModel, Field
 from app.models.models import ItemType
 
 
+# Location schemas
+class LocationBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    code: str = Field(..., min_length=1, max_length=20)
+    order: int = 0
+
+
+class LocationCreate(LocationBase):
+    pass
+
+
+class LocationUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    code: Optional[str] = Field(None, min_length=1, max_length=20)
+    order: Optional[int] = None
+
+
+class LocationResponse(LocationBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class LocationInfo(BaseModel):
+    id: int
+    name: str
+    code: str
+
+    class Config:
+        from_attributes = True
+
+
 # Category schemas
 class CategoryBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
@@ -82,6 +116,7 @@ class ItemBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     item_type: ItemType
     category_id: Optional[int] = None
+    location_ids: list[int] = Field(default_factory=list)
 
 
 class ItemCreate(ItemBase):
@@ -92,6 +127,7 @@ class ItemUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     item_type: Optional[ItemType] = None
     category_id: Optional[int] = None
+    location_ids: Optional[list[int]] = None
     pages: Optional[list[PageCreate]] = None
 
 
@@ -109,6 +145,7 @@ class ItemResponse(ItemBase):
     id: int
     pages: list[PageResponse] = []
     category: Optional[CategoryInfo] = None
+    locations: list[LocationInfo] = []
     created_at: datetime
     updated_at: datetime
 
@@ -122,6 +159,8 @@ class ItemListResponse(BaseModel):
     item_type: ItemType
     category_id: Optional[int] = None
     category: Optional[CategoryInfo] = None
+    location_ids: list[int] = []
+    locations: list[LocationInfo] = []
     pages_count: int
     created_at: datetime
     updated_at: datetime

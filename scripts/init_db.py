@@ -7,9 +7,20 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.database import SessionLocal, init_db
-from app.models.models import ItemType, Category
-from app.schemas import ItemCreate, PageCreate, CategoryCreate
-from app.crud import create_item, get_items, create_category, get_categories
+from app.models.models import ItemType, Category, Location
+from app.schemas import ItemCreate, PageCreate, CategoryCreate, LocationCreate
+from app.crud import create_item, get_items, create_category, get_categories, create_location, get_locations
+
+
+# Demo locations
+DEMO_LOCATIONS = [
+    {"name": "Производственный участок 1", "code": "ПУ-1", "order": 1},
+    {"name": "Производственный участок 2", "code": "ПУ-2", "order": 2},
+    {"name": "Производственный участок 3", "code": "ПУ-3", "order": 3},
+    {"name": "Производственный участок 4", "code": "ПУ-4", "order": 4},
+    {"name": "Производственный участок 5", "code": "ПУ-5", "order": 5},
+    {"name": "МегаСклад", "code": "МегаСклад", "order": 6},
+]
 
 
 # Demo categories
@@ -28,11 +39,12 @@ DEMO_CATEGORIES = {
     ]
 }
 
-# Demo data - category_name refers to categories above
+# Demo data - category_name refers to categories above, location_codes to locations
 DEMO_INCIDENTS = [
     {
         "title": "Потекла рубашка",
         "category_name": "Розлив",
+        "location_codes": ["ПУ-1", "ПУ-2", "ПУ-3"],
         "pages": [
             {
                 "title": "Диагностика проблемы",
@@ -74,6 +86,7 @@ DEMO_INCIDENTS = [
     {
         "title": "Застряла этикетка",
         "category_name": "Этикетировщик",
+        "location_codes": ["ПУ-1", "ПУ-2", "ПУ-4"],
         "pages": [
             {
                 "title": "Остановка и доступ",
@@ -113,6 +126,7 @@ DEMO_INCIDENTS = [
     {
         "title": "Сбой конвейера",
         "category_name": "Изготовление",
+        "location_codes": ["ПУ-1", "ПУ-2", "ПУ-3", "ПУ-4", "ПУ-5"],
         "pages": [
             {
                 "title": "Аварийная остановка",
@@ -168,6 +182,7 @@ DEMO_INSTRUCTIONS = [
     {
         "title": "Запуск линии розлива",
         "category_name": "Запуск линий",
+        "location_codes": ["ПУ-1", "ПУ-2", "ПУ-3"],
         "pages": [
             {
                 "title": "Подготовка к запуску",
@@ -207,6 +222,7 @@ DEMO_INSTRUCTIONS = [
     {
         "title": "Ежедневное ТО конвейера",
         "category_name": "Техобслуживание",
+        "location_codes": ["ПУ-1", "ПУ-2", "ПУ-3", "ПУ-4", "ПУ-5", "МегаСклад"],
         "pages": [
             {
                 "title": "Визуальный осмотр",
@@ -246,6 +262,7 @@ DEMO_INSTRUCTIONS = [
     {
         "title": "Санитарная обработка линии",
         "category_name": "Санитария",
+        "location_codes": ["ПУ-1", "ПУ-2", "ПУ-3", "ПУ-4", "ПУ-5"],
         "pages": [
             {
                 "title": "Подготовка к обработке",
@@ -309,7 +326,19 @@ def init_demo_data():
             print("Database already contains data. Skipping demo data insertion.")
             return
 
-        # Create categories first
+        # Create locations first
+        print("Adding locations...")
+        location_map = {}
+        for loc_data in DEMO_LOCATIONS:
+            loc = create_location(db, LocationCreate(
+                name=loc_data["name"],
+                code=loc_data["code"],
+                order=loc_data["order"]
+            ))
+            location_map[loc_data["code"]] = loc.id
+            print(f"  + {loc_data['code']} ({loc_data['name']})")
+
+        # Create categories
         print("Adding categories...")
         category_map = {}
 
@@ -336,10 +365,12 @@ def init_demo_data():
         print("Adding demo incidents...")
         for incident_data in DEMO_INCIDENTS:
             category_id = category_map.get(incident_data.get("category_name"))
+            location_ids = [location_map[code] for code in incident_data.get("location_codes", []) if code in location_map]
             item = ItemCreate(
                 title=incident_data["title"],
                 item_type=ItemType.INCIDENT,
                 category_id=category_id,
+                location_ids=location_ids,
                 pages=[
                     PageCreate(
                         title=p["title"],
@@ -356,10 +387,12 @@ def init_demo_data():
         print("Adding demo instructions...")
         for instruction_data in DEMO_INSTRUCTIONS:
             category_id = category_map.get(instruction_data.get("category_name"))
+            location_ids = [location_map[code] for code in instruction_data.get("location_codes", []) if code in location_map]
             item = ItemCreate(
                 title=instruction_data["title"],
                 item_type=ItemType.INSTRUCTION,
                 category_id=category_id,
+                location_ids=location_ids,
                 pages=[
                     PageCreate(
                         title=p["title"],
@@ -374,6 +407,7 @@ def init_demo_data():
             print(f"  + {instruction_data['title']}")
 
         print("\nDemo data initialized successfully!")
+        print(f"  - {len(DEMO_LOCATIONS)} locations")
         print(f"  - {len(DEMO_CATEGORIES['incidents']) + len(DEMO_CATEGORIES['instructions'])} categories")
         print(f"  - {len(DEMO_INCIDENTS)} incidents")
         print(f"  - {len(DEMO_INSTRUCTIONS)} instructions")

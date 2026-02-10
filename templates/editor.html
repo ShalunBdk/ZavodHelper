@@ -420,6 +420,62 @@
         white-space: pre-wrap;
     }
 
+    .locations-checkboxes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .location-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 15px;
+        background: #f8f9fa;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        user-select: none;
+    }
+
+    .location-checkbox:hover {
+        background: #e8f4fc;
+        border-color: #3498db;
+    }
+
+    .location-checkbox.checked {
+        background: #e8f5e9;
+        border-color: #27ae60;
+    }
+
+    .location-checkbox input {
+        display: none;
+    }
+
+    .location-checkbox .checkbox-icon {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ccc;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        color: transparent;
+        transition: all 0.2s;
+    }
+
+    .location-checkbox.checked .checkbox-icon {
+        background: #27ae60;
+        border-color: #27ae60;
+        color: white;
+    }
+
+    .location-checkbox .location-code {
+        font-weight: 600;
+    }
+
     @media (max-width: 1024px) {
         .main-container {
             flex-direction: column;
@@ -493,6 +549,10 @@
                         <label>ID</label>
                         <input type="text" class="form-control" id="item-id" placeholder="Авто" readonly>
                     </div>
+                </div>
+                <div class="form-group">
+                    <label>Локации (где применяется)</label>
+                    <div id="locations-checkboxes" class="locations-checkboxes"></div>
                 </div>
             </div>
 
@@ -595,6 +655,7 @@
     };
 
     let categories = [];
+    let locations = [];
     let currentTab = 'incidents';
     let currentItem = null;
     let currentPageIndex = 0;
@@ -602,7 +663,7 @@
 
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
-        await loadCategories();
+        await Promise.all([loadCategories(), loadLocations()]);
         renderItemsList();
     });
 
@@ -611,6 +672,14 @@
             categories = await api('/categories');
         } catch (error) {
             console.error('Failed to load categories:', error);
+        }
+    }
+
+    async function loadLocations() {
+        try {
+            locations = await api('/locations');
+        } catch (error) {
+            console.error('Failed to load locations:', error);
         }
     }
 
@@ -628,6 +697,38 @@
 
         if (currentItem && currentItem.category_id) {
             select.value = currentItem.category_id;
+        }
+    }
+
+    function renderLocationsCheckboxes() {
+        const container = document.getElementById('locations-checkboxes');
+        const selectedIds = currentItem?.location_ids || [];
+
+        container.innerHTML = locations.map(loc => {
+            const isChecked = selectedIds.includes(loc.id);
+            return `
+                <label class="location-checkbox ${isChecked ? 'checked' : ''}" onclick="toggleLocation(${loc.id}, this)">
+                    <span class="checkbox-icon">${isChecked ? '✓' : ''}</span>
+                    <span class="location-code">${loc.code}</span>
+                </label>
+            `;
+        }).join('');
+    }
+
+    function toggleLocation(locId, labelEl) {
+        if (!currentItem.location_ids) {
+            currentItem.location_ids = [];
+        }
+
+        const idx = currentItem.location_ids.indexOf(locId);
+        if (idx > -1) {
+            currentItem.location_ids.splice(idx, 1);
+            labelEl.classList.remove('checked');
+            labelEl.querySelector('.checkbox-icon').textContent = '';
+        } else {
+            currentItem.location_ids.push(locId);
+            labelEl.classList.add('checked');
+            labelEl.querySelector('.checkbox-icon').textContent = '✓';
         }
     }
 
@@ -726,11 +827,15 @@
         list.innerHTML = items.map((item, index) => {
             const cat = categories.find(c => c.id === item.category_id);
             const catLabel = cat ? `${cat.icon} ${cat.name}` : '';
+            const locCodes = (item.location_ids || []).map(id => {
+                const loc = locations.find(l => l.id === id);
+                return loc ? loc.code : '';
+            }).filter(c => c).join(', ');
             return `
                 <div class="item-card ${currentTab === 'incidents' ? 'incident' : 'instruction'} ${currentItem && currentItem.id === item.id ? 'active' : ''}"
                      onclick="selectItem(${index})">
                     <div class="item-card-title">${item.title}</div>
-                    <div class="item-card-meta">${item.pages.length} стр.</div>
+                    <div class="item-card-meta">${item.pages.length} стр.${locCodes ? ` • ${locCodes}` : ''}</div>
                     ${catLabel ? `<div class="item-card-category">${catLabel}</div>` : ''}
                 </div>
             `;
@@ -778,6 +883,7 @@
             document.getElementById('item-category').value = currentItem.category_id;
         }
 
+        renderLocationsCheckboxes();
         renderPagesTabs();
         renderPageEditor();
     }
@@ -959,6 +1065,7 @@
         const newItem = {
             id: null,  // No ID = new item, will be created via POST
             title: currentTab === 'incidents' ? "Новый инцидент" : "Новая инструкция",
+            location_ids: [],
             pages: [
                 {
                     title: "Страница 1",
@@ -990,6 +1097,7 @@
             title: currentItem.title,
             item_type: currentTab === 'incidents' ? 'incident' : 'instruction',
             category_id: categoryId,
+            location_ids: currentItem.location_ids || [],
             pages: currentItem.pages.map(page => ({
                 title: page.title,
                 time: page.time,
@@ -1020,6 +1128,7 @@
                 id: savedItem.id,
                 title: savedItem.title,
                 category_id: savedItem.category_id,
+                location_ids: savedItem.location_ids || (savedItem.locations ? savedItem.locations.map(l => l.id) : []),
                 pages: savedItem.pages.map(p => ({
                     title: p.title,
                     time: p.time,
@@ -1068,7 +1177,7 @@
 
         saveCurrentPage();
         const newItem = JSON.parse(JSON.stringify(currentItem));
-        newItem.id = Math.max(...data[currentTab].map(i => i.id), 0) + 1;
+        newItem.id = null;  // New item - will be created via POST
         newItem.title += ' (копия)';
         delete newItem._index;
 
